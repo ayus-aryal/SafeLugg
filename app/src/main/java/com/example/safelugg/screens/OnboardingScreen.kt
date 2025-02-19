@@ -161,7 +161,8 @@ fun OnboardingPage(image: Painter, title: String, description: String) {
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = title,
-            fontSize = 30.sp, // Slightly larger for emphasis
+            fontSize = 30.sp,
+            style = MaterialTheme.typography.bodyMedium,// Slightly larger for emphasis
             fontFamily = customFontFamily,
             fontWeight = FontWeight.ExtraBold,
             color = Color(0xFF003366),
