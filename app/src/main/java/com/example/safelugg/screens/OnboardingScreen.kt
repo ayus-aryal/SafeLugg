@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import com.example.safelugg.R
 import com.example.safelugg.MainActivity
@@ -39,33 +41,27 @@ class OnboardingActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            OnboardingScreen(onFinish = {
-                startActivity(Intent(this, MainActivity::class.java))
-                finish() // Close onboarding after completion
-            })
-        }
+            val navController = rememberNavController()
+            OnboardingScreen(navController)        }
     }
 }
 
 @Composable
-fun OnboardingScreen(onFinish: () -> Unit) {
+fun OnboardingScreen(navController: NavController) {
     val pagerState = rememberPagerState(pageCount = { 3 })
     val coroutineScope = rememberCoroutineScope()
-
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
             .background(Color.White),
-
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Ensures proper height allocation
+                .weight(1f)
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -81,10 +77,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        PageIndicator(
-            totalPages = 3,
-            currentPage = pagerState.currentPage
-        )
+        PageIndicator(totalPages = 3, currentPage = pagerState.currentPage)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -95,38 +88,47 @@ fun OnboardingScreen(onFinish: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             if (pagerState.currentPage > 0) {
-                Button(onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                    }
-                },
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
-                        contentColor = Color.Black) ){
+                        contentColor = Color.Black
+                    )
+                ) {
                     Text("Back")
                 }
             } else {
-                Spacer(modifier = Modifier.width(80.dp)) // Placeholder for alignment
+                Spacer(modifier = Modifier.width(80.dp))
             }
 
-            Button(onClick = {
-                coroutineScope.launch {
-                    if (pagerState.currentPage < 2) {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                    } else {
-                        onFinish() // Navigate to the main screen
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        if (pagerState.currentPage < 2) {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        } else {
+                            // Navigate to Welcome Screen after onboarding
+                            navController.navigate("welcome_screen"){
+                                popUpTo("onboarding_screen") { inclusive = true}
+                            }
+                        }
                     }
-                }
-            },
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF003366),
                     contentColor = Color.White
-                )) {
+                )
+            ) {
                 Text(if (pagerState.currentPage < 2) "Next" else "Get Started")
             }
         }
     }
 }
+
 
 @Composable
 fun PageIndicator(totalPages: Int, currentPage: Int) {
@@ -210,8 +212,4 @@ fun getDescriptionForPage(page: Int): String = when (page) {
     else -> ""
 }
 
-@Preview(showBackground = true)
-@Composable
-fun OnboardingScreenPreview() {
-    OnboardingScreen(onFinish = {})
-}
+

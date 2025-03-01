@@ -13,14 +13,16 @@ import androidx.navigation.compose.rememberNavController
 import com.example.safelugg.myviewmodels.GoogleSignInViewModel
 import com.example.safelugg.screens.FillYourDetailsScreen
 import com.example.safelugg.screens.MainScreen
+import com.example.safelugg.screens.OnboardingScreen
 import com.example.safelugg.screens.WelcomeScreen
 import com.example.safelugg.ui.theme.SafeLuggTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        installSplashScreen()
         setContent {
             SafeLugg()
         }
@@ -34,11 +36,17 @@ fun SafeLugg() {
     val context = LocalContext.current
     val googleSignInViewModel = GoogleSignInViewModel()
 
-    NavHost(navController = navController, startDestination = "welcome_screen") {
+    NavHost(navController = navController, startDestination = "onboarding_screen") {
+
+
+
+        composable(route = "onboarding_screen") {
+            OnboardingScreen(navController)
+        }
 
         composable(route = "welcome_screen") {
             WelcomeScreen {
-                googleSignInViewModel.handleGoogleSignIn(context,navController)
+                googleSignInViewModel.handleGoogleSignIn(context, navController)
             }
         }
 
@@ -46,15 +54,15 @@ fun SafeLugg() {
             FillYourDetailsScreen(navController)
         }
 
-
         composable(route = "home_screen") {
             MainScreen(navController)
         }
-
-
-
-
-
     }
 
+
+
+
+
+
 }
+
