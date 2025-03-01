@@ -1,10 +1,12 @@
 package com.example.safelugg.screens
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.Layout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,13 +29,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.privacysandbox.tools.core.model.Type
 import kotlinx.coroutines.launch
 import com.example.safelugg.R
 import com.example.safelugg.MainActivity
 
 class OnboardingActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             OnboardingScreen(onFinish = {
                 startActivity(Intent(this, MainActivity::class.java))

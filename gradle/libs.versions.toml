@@ -24,6 +24,7 @@ storage = "1.5.0"
 foundationAndroid = "1.7.8"
 playServicesLocation = "21.3.0"
 foundationLayoutAndroid = "1.7.8"
+toolsCore = "1.0.0-alpha12"
 
 [libraries]
 
@@ -58,6 +59,7 @@ androidx-foundation-android = { group = "androidx.compose.foundation", name = "f
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
+androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
 
 
 [plugins]
