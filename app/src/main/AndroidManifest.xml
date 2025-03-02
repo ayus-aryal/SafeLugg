@@ -11,26 +11,21 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SplashScreenSafeLugg"
+        android:theme="@style/Theme.SafeLugg"
         tools:targetApi="31">
 
         <!-- Main Activity (Launcher) -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.SplashScreenSafeLugg">
+            android:theme="@style/Theme.SafeLugg">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Onboarding Screen -->
-        <activity
-            android:name=".screens.OnboardingActivity"
-            android:exported="true"
-            android:theme="@style/Theme.SafeLugg">
-        </activity>
+
 
     </application>
 
