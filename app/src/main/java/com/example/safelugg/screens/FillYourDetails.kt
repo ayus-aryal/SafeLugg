@@ -4,26 +4,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,24 +25,22 @@ import com.example.safelugg.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-
 class FillYourDetails : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val navController = rememberNavController() // Create NavController
+            val navController = rememberNavController()
             FillYourDetailsScreen(navController)
         }
     }
 }
-
-
 
 @Composable
 fun FillYourDetailsScreen(navController: NavController) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
@@ -72,9 +55,7 @@ fun FillYourDetailsScreen(navController: NavController) {
         }
     }
 
-    val customFontFamily = FontFamily(
-        Font(R.font.inter) // Replace 'inter' with the name of your font file (without extension)
-    )
+    val customFontFamily = FontFamily(Font(R.font.inter)) // Replace 'inter' with your actual font file
 
     Column(
         modifier = Modifier
@@ -96,19 +77,17 @@ fun FillYourDetailsScreen(navController: NavController) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "First name",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Light,
                 fontSize = 18.sp,
+                fontWeight = FontWeight.Light,
                 fontFamily = customFontFamily,
-                modifier = Modifier.padding(start = 16.dp).align(Alignment.Start)
+                modifier = Modifier.padding(start = 16.dp)
             )
 
             OutlinedTextField(
                 value = firstName,
                 onValueChange = { firstName = it },
-                label = { Text("") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -117,17 +96,15 @@ fun FillYourDetailsScreen(navController: NavController) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "Last name",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Light,
                 fontSize = 18.sp,
+                fontWeight = FontWeight.Light,
                 fontFamily = customFontFamily,
-                modifier = Modifier.padding(start = 16.dp).align(Alignment.Start)
+                modifier = Modifier.padding(start = 16.dp)
             )
 
             OutlinedTextField(
                 value = lastName,
                 onValueChange = { lastName = it },
-                label = { Text("") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -138,17 +115,15 @@ fun FillYourDetailsScreen(navController: NavController) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "Phone Number",
-                style = MaterialTheme.typography.bodyMedium,
-                fontFamily = customFontFamily,
-                fontWeight = FontWeight.Light,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(start = 16.dp).align(Alignment.Start)
+                fontWeight = FontWeight.Light,
+                fontFamily = customFontFamily,
+                modifier = Modifier.padding(start = 16.dp)
             )
 
             OutlinedTextField(
                 value = phoneNumber,
                 onValueChange = { phoneNumber = it },
-                label = { Text("") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -164,10 +139,7 @@ fun FillYourDetailsScreen(navController: NavController) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Button(
-                onClick = {
-                    navController.navigate("home_screen")
-
-                }
+                onClick = { navController.navigate("home_screen") }
             ) {
                 Text("Skip for now", fontFamily = customFontFamily)
             }
@@ -175,23 +147,7 @@ fun FillYourDetailsScreen(navController: NavController) {
             Button(
                 onClick = {
                     if (userId != null && userEmail != null) {
-                        val userMap = hashMapOf(
-                            "firstName" to firstName,
-                            "lastName" to lastName,
-                            "email" to userEmail,
-                            "phoneNumber" to phoneNumber
-                        )
-                        firestore.collection("users")
-                            .document(userId)
-                            .set(userMap)
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Profile saved successfully!", Toast.LENGTH_SHORT).show()
-                               navController.navigate("home_screen") // Navigate after success
-
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(context, "Failed to save profile.", Toast.LENGTH_SHORT).show()
-                            }
+                        saveUserDataToFirestore(userId, firstName, lastName, userEmail, phoneNumber, firestore, context, navController)
                     } else {
                         Toast.makeText(context, "User not authenticated.", Toast.LENGTH_SHORT).show()
                     }
@@ -204,6 +160,34 @@ fun FillYourDetailsScreen(navController: NavController) {
     }
 }
 
+// 🔹 Function to Save Data to Firestore
+fun saveUserDataToFirestore(
+    userId: String,
+    firstName: String,
+    lastName: String,
+    email: String,
+    phoneNumber: String,
+    firestore: FirebaseFirestore,
+    context: android.content.Context,
+    navController: NavController
+) {
+    val userMap = hashMapOf(
+        "firstName" to firstName,
+        "lastName" to lastName,
+        "email" to email,
+        "phoneNumber" to phoneNumber
+    )
+
+    firestore.collection("users").document(userId)
+        .set(userMap)
+        .addOnSuccessListener {
+            Toast.makeText(context, "Profile saved successfully!", Toast.LENGTH_SHORT).show()
+            navController.navigate("home_screen")
+        }
+        .addOnFailureListener { e ->
+            Toast.makeText(context, "Failed to save profile: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+}
 
 @Preview(showBackground = true)
 @Composable
