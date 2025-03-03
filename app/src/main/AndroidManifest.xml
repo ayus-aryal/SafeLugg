@@ -12,6 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SafeLugg"
+        android:label="@string/app_name"
         tools:targetApi="31">
 
         <!-- Main Activity (Launcher) -->
