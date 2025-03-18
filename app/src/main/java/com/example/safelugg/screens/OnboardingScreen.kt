@@ -54,6 +54,7 @@ class OnboardingActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun OnboardingScreen(navController: NavController) {
     val pagerState = rememberPagerState(pageCount = { 3 })
