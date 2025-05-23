@@ -55,7 +55,7 @@ fun FillYourDetailsScreen(navController: NavController) {
         }
     }
 
-    val customFontFamily = FontFamily(Font(R.font.inter)) // Replace 'inter' with your actual font file
+    val customFontFamily = FontFamily(Font(R.font.inter))
 
     Column(
         modifier = Modifier
