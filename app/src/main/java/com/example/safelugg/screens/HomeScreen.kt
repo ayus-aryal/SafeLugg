@@ -20,16 +20,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.safelugg.R
+import com.example.safelugg.myviewmodels.CustomerViewModel
 import java.util.Calendar
 
 
 val customFontFamily = FontFamily(Font(R.font.inter))
 
 @Composable
-fun MainScreen(navController: NavController) {
+fun MainScreen(navController: NavController, viewModel: CustomerViewModel = viewModel()) {
     val searchHistory = remember { mutableStateListOf<String>() }
 
     Column(
@@ -38,12 +40,8 @@ fun MainScreen(navController: NavController) {
     ) {
         ModernSearchBar { location, date, bags ->
             val searchQuery = "$location | $date | $bags"
+            viewModel.addSearchQuery(searchQuery)
 
-            if (searchQuery.isNotBlank() && searchQuery !in searchHistory) {
-                searchHistory.add(0, searchQuery)
-            }
-
-            // Navigate to SearchResultScreen with arguments
             val encodedLocation = Uri.encode(location)
             val encodedDate = Uri.encode(date)
             val encodedBags = Uri.encode(bags)
@@ -52,7 +50,7 @@ fun MainScreen(navController: NavController) {
         }
 
 
-        RecentSearchCard(searchHistory)
+        RecentSearchCard(viewModel.recentSearches)
         BottomNavBar(navController)
     }
 }

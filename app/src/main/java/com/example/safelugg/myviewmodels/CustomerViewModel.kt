@@ -1,6 +1,7 @@
 package com.example.safelugg.myviewmodels
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,7 +24,8 @@ class CustomerViewModel : ViewModel() {
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                val response = RetrofitInstance.api.searchVendors(SearchRequest(city, date, noOfBags))
+                val response =
+                    RetrofitInstance.api.searchVendors(SearchRequest(city, date, noOfBags))
                 if (response.isSuccessful) {
                     _searchResults.value = response.body() ?: emptyList()
                 } else {
@@ -34,6 +36,16 @@ class CustomerViewModel : ViewModel() {
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+
+    private val _recentSearches = mutableStateListOf<String>()
+    val recentSearches: List<String> = _recentSearches
+
+    fun addSearchQuery(query: String) {
+        if (query.isNotBlank() && query !in _recentSearches) {
+            _recentSearches.add(0, query)
         }
     }
 }

@@ -5,9 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.safelugg.myviewmodels.CustomerViewModel
 import com.example.safelugg.myviewmodels.GoogleSignInViewModel
 import com.example.safelugg.screens.FillYourDetailsScreen
 import com.example.safelugg.screens.MainScreen
@@ -31,6 +35,8 @@ class MainActivity : ComponentActivity() {
 fun SafeLugg() {
     val navController = rememberNavController()
     val googleSignInViewModel = GoogleSignInViewModel()
+    val customerViewModel: CustomerViewModel = viewModel()  // Shared instance
+
 
     SafeLuggTheme {
         NavHost(navController = navController, startDestination = "home_screen") {
@@ -54,16 +60,20 @@ fun SafeLugg() {
             }
 
             composable(route = "home_screen") {
-                MainScreen(navController)
+                MainScreen(navController, customerViewModel)
             }
             composable(
-                "search_result_screen/{location}/{date}/{bags}"
+                route = "search_result_screen/{location}/{date}/{bags}",
+                arguments = listOf(
+                    navArgument("location") { type = NavType.StringType },
+                    navArgument("date") { type = NavType.StringType },
+                    navArgument("bags") { type = NavType.StringType }
+                )
             ) { backStackEntry ->
                 val location = backStackEntry.arguments?.getString("location") ?: ""
                 val date = backStackEntry.arguments?.getString("date") ?: ""
                 val bags = backStackEntry.arguments?.getString("bags") ?: ""
-
-                SearchResultScreen(location = location, date = date, bags = bags)
+                SearchResultScreen(location, date, bags, customerViewModel)
             }
 
         }
