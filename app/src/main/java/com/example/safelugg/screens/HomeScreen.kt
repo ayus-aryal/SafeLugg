@@ -32,28 +32,55 @@ val customFontFamily = FontFamily(Font(R.font.inter))
 
 @Composable
 fun MainScreen(navController: NavController, viewModel: CustomerViewModel = viewModel()) {
-    val searchHistory = remember { mutableStateListOf<String>() }
+    val searchHistory = viewModel.recentSearches
+    val insets = WindowInsets.systemBars.asPaddingValues()
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(
+                top = insets.calculateTopPadding() + 16.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = insets.calculateBottomPadding() + 8.dp
+            ),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        ModernSearchBar { location, date, bags ->
-            val searchQuery = "$location | $date | $bags"
-            viewModel.addSearchQuery(searchQuery)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f), // Allows content to take available space without pushing BottomNav off screen
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            ModernSearchBar { location, date, bags ->
+                val searchQuery = "$location | $date | $bags"
+                viewModel.addSearchQuery(searchQuery)
 
-            val encodedLocation = Uri.encode(location)
-            val encodedDate = Uri.encode(date)
-            val encodedBags = Uri.encode(bags)
+                val encodedLocation = Uri.encode(location)
+                val encodedDate = Uri.encode(date)
+                val encodedBags = Uri.encode(bags)
 
-            navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
+                navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
+            }
+
+            if (searchHistory.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    RecentSearchCard(searchHistory)
+                }
+            } else {
+                RecentSearchCard(searchHistory)
+            }
         }
 
-
-        RecentSearchCard(viewModel.recentSearches)
-        BottomNavBar(navController)
+        BottomNavBar(navController = navController)
     }
 }
+
+
 
 // Top Search Bar
 // --- Inside your ModernSearchBar ---
@@ -84,7 +111,7 @@ fun ModernSearchBar(onSearch: (location: String, date: String, bags: String) -> 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 30.dp, start = 10.dp, end = 10.dp)
+            .padding(horizontal = 10.dp)
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -206,6 +233,7 @@ fun RecentSearchCard(searchHistory: List<String>) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
+
         border = BorderStroke(2.dp, Color(0xFFB0B0B0)),
 
     ) {
