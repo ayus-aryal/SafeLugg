@@ -12,6 +12,7 @@ import com.example.safelugg.myviewmodels.GoogleSignInViewModel
 import com.example.safelugg.screens.FillYourDetailsScreen
 import com.example.safelugg.screens.MainScreen
 import com.example.safelugg.screens.OnboardingScreen
+import com.example.safelugg.screens.SearchResultScreen
 import com.example.safelugg.screens.SplashScreen
 import com.example.safelugg.screens.WelcomeScreen
 import com.example.safelugg.ui.theme.SafeLuggTheme
@@ -32,7 +33,7 @@ fun SafeLugg() {
     val googleSignInViewModel = GoogleSignInViewModel()
 
     SafeLuggTheme {
-        NavHost(navController = navController, startDestination = "splash_screen") {
+        NavHost(navController = navController, startDestination = "home_screen") {
 
             composable(route = "splash_screen") {
                 SplashScreen(navController)
@@ -54,6 +55,9 @@ fun SafeLugg() {
 
             composable(route = "home_screen") {
                 MainScreen(navController)
+            }
+            composable(route = "search_result_screen"){
+                SearchResultScreen()
             }
         }
     }

@@ -46,21 +46,16 @@ fun MainScreen(navController: NavController) {
 }
 
 // Top Search Bar
+// --- Inside your ModernSearchBar ---
+
 @Composable
 fun ModernSearchBar(onSearch: (String) -> Unit) {
     var location by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("Today") }
+    var date by remember { mutableStateOf("Date") }
     var bags by remember { mutableStateOf("2 bags") }
+    var isBagDropdownExpanded by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
-
-
-  /*  fun name(firstName){
-        Text("Hello "+ $firstName)
-    }
-*/
-
-
-
 
     fun showDatePicker(onDateSelected: (String) -> Unit) {
         val calendar = Calendar.getInstance()
@@ -79,8 +74,7 @@ fun ModernSearchBar(onSearch: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            //.padding(left = 16.dp)
-            .padding(top = 90.dp, start = 16.dp, end = 16.dp)
+            .padding(top = 90.dp, start = 10.dp, end = 10.dp)
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -90,22 +84,18 @@ fun ModernSearchBar(onSearch: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            //  Search Icon
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+            // Location Section - Takes More Space
+            Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+            Spacer(modifier = Modifier.width(4.dp))
 
-            Spacer(modifier = Modifier.width(0.dp))
-            // Search TextField
             TextField(
                 value = location,
                 onValueChange = { location = it },
                 placeholder = { Text("Location", fontFamily = customFontFamily) },
                 singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(0.dp),
+                modifier = Modifier.weight(1.5f),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -116,44 +106,79 @@ fun ModernSearchBar(onSearch: (String) -> Unit) {
                 )
             )
 
-            Divider(
-                color = Color.Gray, // Set line color
-                modifier = Modifier
-                    .height(24.dp) // Adjust height to match text/icons
-                    .width(1.dp) // Thin line
-            )
+            VerticalDivider()
 
-            Spacer(modifier = Modifier.width(10.dp))
-
-            // Date Picker
-            IconButton(onClick = { showDatePicker { date = it } }) {
-                Icon(imageVector = Icons.Default.DateRange, contentDescription = "Pick Date")
+            // Date Section
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1.2f)
+            ) {
+                IconButton(onClick = { showDatePicker { date = it } }) {
+                    Icon(imageVector = Icons.Default.DateRange, contentDescription = "Pick Date")
+                }
+                Text(
+                    text = date,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = customFontFamily,
+                    color = Color.DarkGray
+                )
             }
-            Text(text = date, style = MaterialTheme.typography.bodyMedium, fontFamily = customFontFamily, color = Color.DarkGray)
 
-            Spacer(modifier = Modifier.width(10.dp))
+            VerticalDivider()
 
-            Divider(
-                color = Color.Gray, // Set line color
-                modifier = Modifier
-                    .height(24.dp) // Adjust height to match text/icons
-                    .width(1.dp) // Thin line
-            )
+            // Bag Section
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1.3f)
+            ) {
+                Box {
+                    IconButton(onClick = { isBagDropdownExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Select Bags"
+                        )
+                    }
 
-            Spacer(modifier = Modifier.width(8.dp))
+                    DropdownMenu(
+                        expanded = isBagDropdownExpanded,
+                        onDismissRequest = { isBagDropdownExpanded = false }
+                    ) {
+                        (1..5).forEach { count ->
+                            DropdownMenuItem(
+                                text = { Text("$count bag${if (count > 1) "s" else ""}") },
+                                onClick = {
+                                    bags = if (count == 1) "1 bag" else "$count bags"
+                                    isBagDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
-            // Bags Icon + Text
-            IconButton(onClick = { /* Select Bags */ }) {
-                Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Bags")
+                Text(
+                    text = bags,
+                    fontWeight = FontWeight.Light,
+                    fontFamily = customFontFamily,
+                    color = Color.DarkGray
+                )
             }
-            Text(text = bags,
-                fontWeight = FontWeight.Light,
-                fontFamily = customFontFamily,
-                color = Color.DarkGray
-            )
         }
     }
 }
+
+
+@Composable
+fun VerticalDivider() {
+    Spacer(modifier = Modifier.width(10.dp))
+    Divider(
+        color = Color.Gray,
+        modifier = Modifier
+            .height(24.dp)
+            .width(1.dp)
+    )
+    Spacer(modifier = Modifier.width(10.dp))
+}
+
 
 // Recent Searches Card
 @Composable
