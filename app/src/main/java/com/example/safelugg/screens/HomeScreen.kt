@@ -1,6 +1,7 @@
 package com.example.safelugg.screens
 
 import android.app.DatePickerDialog
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,11 +36,22 @@ fun MainScreen(navController: NavController) {
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        ModernSearchBar { newSearch ->
-            if (newSearch.isNotBlank() && newSearch !in searchHistory) {
-                searchHistory.add(0, newSearch)
+        ModernSearchBar { location, date, bags ->
+            val searchQuery = "$location | $date | $bags"
+
+            if (searchQuery.isNotBlank() && searchQuery !in searchHistory) {
+                searchHistory.add(0, searchQuery)
             }
+
+            // Navigate to SearchResultScreen with arguments
+            val encodedLocation = Uri.encode(location)
+            val encodedDate = Uri.encode(date)
+            val encodedBags = Uri.encode(bags)
+
+            navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
         }
+
+
         RecentSearchCard(searchHistory)
         BottomNavBar(navController)
     }
@@ -49,7 +61,7 @@ fun MainScreen(navController: NavController) {
 // --- Inside your ModernSearchBar ---
 
 @Composable
-fun ModernSearchBar(onSearch: (String) -> Unit) {
+fun ModernSearchBar(onSearch: (location: String, date: String, bags: String) -> Unit) {
     var location by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("Date") }
     var bags by remember { mutableStateOf("2 bags") }
@@ -74,7 +86,7 @@ fun ModernSearchBar(onSearch: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 90.dp, start = 10.dp, end = 10.dp)
+            .padding(top = 30.dp, start = 10.dp, end = 10.dp)
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -86,10 +98,16 @@ fun ModernSearchBar(onSearch: (String) -> Unit) {
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Location Section - Takes More Space
-            Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+            // Search Icon Button (Clickable)
+            IconButton(onClick = {
+                onSearch(location, date, bags)
+            }) {
+                Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+            }
+
             Spacer(modifier = Modifier.width(4.dp))
 
+            // Location Field
             TextField(
                 value = location,
                 onValueChange = { location = it },
@@ -165,6 +183,7 @@ fun ModernSearchBar(onSearch: (String) -> Unit) {
         }
     }
 }
+
 
 
 @Composable

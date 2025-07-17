@@ -56,9 +56,16 @@ fun SafeLugg() {
             composable(route = "home_screen") {
                 MainScreen(navController)
             }
-            composable(route = "search_result_screen"){
-                SearchResultScreen()
+            composable(
+                "search_result_screen/{location}/{date}/{bags}"
+            ) { backStackEntry ->
+                val location = backStackEntry.arguments?.getString("location") ?: ""
+                val date = backStackEntry.arguments?.getString("date") ?: ""
+                val bags = backStackEntry.arguments?.getString("bags") ?: ""
+
+                SearchResultScreen(location = location, date = date, bags = bags)
             }
+
         }
     }
 }
