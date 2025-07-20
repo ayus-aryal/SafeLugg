@@ -8,7 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitInstance {
     val api: CustomerApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(" https://199ef81b84f1.ngrok-free.app/")
+            .baseUrl("https://db7482136f0e.ngrok-free.app/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(CustomerApiService::class.java)

@@ -12,5 +12,6 @@ data class VendorResponse(
     val businessName: String,
     val city: String,
     val availableCapacity: Int,
-    val pricePerBag: Int
+    val pricePerBag: Int,
+    val imageUrls: List<String>
 )

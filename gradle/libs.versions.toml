@@ -13,6 +13,7 @@ composeBom = "2025.02.00"
 credentialsPlayServicesAuth = "1.5.0-alpha05"
 googleid = "1.1.1"
 
+
 firebaseBom = "33.9.0"
 gmsGoogleServices = "4.4.2"
 firebaseAuth = "23.2.0"
@@ -60,6 +61,8 @@ play-services-auth = { module = "com.google.android.gms:play-services-auth", ver
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
 androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
+
+
 
 
 [plugins]

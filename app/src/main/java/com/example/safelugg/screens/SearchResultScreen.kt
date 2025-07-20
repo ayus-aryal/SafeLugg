@@ -1,89 +1,82 @@
-package com.example.safelugg.screens
-
-import android.annotation.SuppressLint
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.safelugg.myviewmodels.CustomerViewModel
 import com.example.safelugg.myviewmodels.VendorResponse
+import com.example.safelugg.screens.customFontFamily
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchResultScreen(
     location: String,
     date: String,
     bags: String,
-    viewModel: CustomerViewModel = viewModel()
+    onEditClick: () -> Unit,
+    onBackClick: () -> Unit,
+    viewModel: CustomerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
-    LaunchedEffect(location, date, bags) {
-        viewModel.searchVendors(location, date, bags.toIntOrNull() ?: 1)
-    }
-
     val searchResults by viewModel.searchResults
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
 
-    val insets = WindowInsets.systemBars.asPaddingValues()
+    LaunchedEffect(location, date, bags) {
+        viewModel.searchVendors(location, date, bags.toIntOrNull() ?: 1)
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                top = insets.calculateTopPadding() + 8.dp,
-                start = 16.dp,
-                end = 16.dp
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Search Results", fontFamily = customFontFamily) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
-    ) {
-        Text(
-            text = "$location | $date | $bags bags",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+        ) {
+            SearchParamsHeader(location, date, bags, onEditClick, customFontFamily)
+            Spacer(Modifier.height(8.dp))
+            FilterChipsRow(customFontFamily)
+            Spacer(Modifier.height(16.dp))
 
-        when {
-            isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-            }
-            errorMessage != null -> {
-                Text(
-                    text = "Error: $errorMessage",
-                    color = Color.Red,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            searchResults.isEmpty() -> {
-                Text(
-                    text = "No vendors found.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(
-                        bottom = insets.calculateBottomPadding() + 16.dp
-                    ),
-                    modifier = Modifier.fillMaxSize()
-                ) {
+            when {
+                isLoading -> CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                errorMessage != null -> Text("Error: $errorMessage", color = Color.Red)
+                searchResults.isEmpty() -> Text("No vendors found.", fontFamily = customFontFamily)
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(searchResults) { vendor ->
-                        VendorResultCard(vendor)
+                        VendorResultCard(vendor, customFontFamily)
                     }
                 }
             }
@@ -91,97 +84,156 @@ fun SearchResultScreen(
     }
 }
 
-
-
-
-@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun VendorResultCard(vendor: VendorResponse) {
+fun SearchParamsHeader(
+    location: String,
+    date: String,
+    bags: String,
+    onEditClick: () -> Unit,
+    customFontFamily: FontFamily
+) {
+    Card(
+        border = BorderStroke(1.dp, Color.Black),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("$location | $date | $bags bags", fontFamily = customFontFamily, fontWeight = FontWeight.Bold)
+            }
+            IconButton(onClick = onEditClick) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit Search")
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterChipsRow(customFontFamily: FontFamily) {
+    Card(
+        border = BorderStroke(1.dp, Color.Black),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            Modifier
+                .padding(8.dp)
+                .horizontalScroll(rememberScrollState())
+        ) {
+            FilterChip("Nearby", customFontFamily)
+            Spacer(Modifier.width(8.dp))
+            FilterChip("Low Price", customFontFamily)
+            Spacer(Modifier.width(8.dp))
+            FilterChip("Verified", customFontFamily)
+        }
+    }
+}
+
+@Composable
+fun FilterChip(text: String, customFontFamily: FontFamily) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        border = BorderStroke(1.dp, Color.Black),
+        color = Color.White,
+        modifier = Modifier
+            .padding(4.dp)
+            .height(32.dp)
+    ) {
+        Box(Modifier.padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+            Text(text, fontSize = 12.sp, fontFamily = customFontFamily)
+        }
+    }
+}
+
+@Composable
+fun VendorResultCard(vendor: VendorResponse, customFontFamily: FontFamily) {
+    val images = vendor.imageUrls.ifEmpty { listOf("https://via.placeholder.com/300x200.png?text=No+Image") }
+    val pagerState = rememberPagerState { images.size }
+
     Card(
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(6.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            BoxWithConstraints {
-                val imageHeight = if (maxWidth < 360.dp) 140.dp else 180.dp
+            Box {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                ) { page ->
+                    AsyncImage(
+                        model = images[page],
+                        contentDescription = "Vendor Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(imageHeight)
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .background(Color(0xFF0072C6), shape = RoundedCornerShape(4.dp))
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.LightGray)
+                    Text(
+                        "4.2 ★ Very Good",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        fontFamily = customFontFamily
                     )
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .background(Color(0xFF0072C6), shape = RoundedCornerShape(4.dp))
-                    ) {
-                        Text(
-                            text = "4.2 ★ Very Good",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(4.dp)
-                        )
-                    }
                 }
             }
 
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = vendor.businessName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+            DotsIndicator(
+                totalDots = pagerState.pageCount,
+                selectedIndex = pagerState.currentPage,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp)
+            )
 
-                Text(
-                    text = "${vendor.city} • 2.0 km from center",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
-                )
-
-                Text(
-                    text = "10% OFF on your booking",
-                    color = Color(0xFF2E7D32),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
+            Column(Modifier.padding(12.dp)) {
+                Text(vendor.businessName, fontWeight = FontWeight.Bold, fontFamily = customFontFamily)
+                Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "₹ ${vendor.pricePerBag}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF0072C6),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "₹ 9999",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        textDecoration = TextDecoration.LineThrough
-                    )
+                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("${vendor.city} • 2.0 km from center", color = Color.Gray, fontSize = 12.sp, fontFamily = customFontFamily)
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Verified Partner with secure storage & CCTV ✅",
-                    fontSize = 12.sp,
-                    color = Color.DarkGray
-                )
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("₹ ${vendor.pricePerBag}", color = Color(0xFF0072C6), fontWeight = FontWeight.Bold, fontFamily = customFontFamily)
+                    Spacer(Modifier.width(6.dp))
+                    Text("₹ 9999", color = Color.Gray, fontSize = 12.sp, textDecoration = TextDecoration.LineThrough, fontFamily = customFontFamily)
+                }
+                Text("+ ₹ 50 taxes & fees per bag", color = Color.Gray, fontSize = 10.sp, fontFamily = customFontFamily)
+                Spacer(Modifier.height(6.dp))
+                Text("Secure storage, CCTV, Verified Partner", color = Color.DarkGray, fontSize = 12.sp, fontFamily = customFontFamily)
             }
+        }
+    }
+}
+
+@Composable
+fun DotsIndicator(totalDots: Int, selectedIndex: Int, modifier: Modifier = Modifier) {
+    Row(horizontalArrangement = Arrangement.Center, modifier = modifier) {
+        repeat(totalDots) { index ->
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .padding(4.dp)
+                    .background(if (index == selectedIndex) Color(0xFF0072C6) else Color.LightGray, CircleShape)
+            )
         }
     }
 }

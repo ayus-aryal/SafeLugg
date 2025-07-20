@@ -1,5 +1,6 @@
 package com.example.safelugg
 
+import SearchResultScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,7 +17,8 @@ import com.example.safelugg.myviewmodels.GoogleSignInViewModel
 import com.example.safelugg.screens.FillYourDetailsScreen
 import com.example.safelugg.screens.MainScreen
 import com.example.safelugg.screens.OnboardingScreen
-import com.example.safelugg.screens.SearchResultScreen
+import com.example.safelugg.screens.SearchResultScreen1
+
 import com.example.safelugg.screens.SplashScreen
 import com.example.safelugg.screens.WelcomeScreen
 import com.example.safelugg.ui.theme.SafeLuggTheme
@@ -73,8 +75,24 @@ fun SafeLugg() {
                 val location = backStackEntry.arguments?.getString("location") ?: ""
                 val date = backStackEntry.arguments?.getString("date") ?: ""
                 val bags = backStackEntry.arguments?.getString("bags") ?: ""
-                SearchResultScreen(location, date, bags, customerViewModel)
+
+                SearchResultScreen1(
+                    location = location,
+                    date = date,
+                    bags = bags,
+                    onEditClick = {
+                        // Navigate to your search/edit screen or popBackStack() if you want to reuse
+                        navController.popBackStack()
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    viewModel = customerViewModel
+                )
             }
+
+
+
 
         }
     }
