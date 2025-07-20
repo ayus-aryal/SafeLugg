@@ -4,20 +4,30 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,39 +36,70 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.safelugg.R
 import com.example.safelugg.myviewmodels.CustomerViewModel
+import com.example.safelugg.myviewmodels.CustomerViewModelFactory
 import java.util.Calendar
-
 
 val customFontFamily = FontFamily(Font(R.font.inter))
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Composable
-fun MainScreen(navController: NavController, viewModel: CustomerViewModel = viewModel()) {
-    val searchHistory = viewModel.recentSearches
-    val insets = WindowInsets.systemBars.asPaddingValues()
+// Modern color scheme inspired by hotel booking apps
+object AppColors {
+    val Primary = Color(0xFF1976D2)
+    val PrimaryVariant = Color(0xFF1565C0)
+    val Secondary = Color(0xFF03DAC6)
+    val Background = Color(0xFFF8FAFC)
+    val Surface = Color.White
+    val SurfaceVariant = Color(0xFFF1F5F9)
+    val OnSurface = Color(0xFF1E293B)
+    val OnSurfaceVariant = Color(0xFF64748B)
+    val Outline = Color(0xFFE2E8F0)
+}
 
+@Composable
+fun MainScreen(navController: NavController, customerViewModel: CustomerViewModel) {
+    val context = LocalContext.current
+    val viewModelFactory = remember { CustomerViewModelFactory(context) }
+    val viewModel: CustomerViewModel = viewModel(factory = viewModelFactory)
+    val searchHistory = viewModel.recentSearches
 
     Scaffold(
-        bottomBar = { BottomNavBar(navController) }
-    ) {  innerPadding->
-        Column(
+        bottomBar = { ModernBottomNavBar(navController) },
+        containerColor = AppColors.Background
+    ) { innerPadding ->
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = insets.calculateTopPadding() + 16.dp,
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = insets.calculateBottomPadding() + 8.dp
-                ),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(
+                horizontal = 20.dp,
+                vertical = 24.dp
+            )
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f), // Allows content to take available space without pushing BottomNav off screen
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                ModernSearchBar { location, date, bags ->
+            item {
+                // Header Section
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Find Storage",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.OnSurface,
+                        fontFamily = customFontFamily
+                    )
+                    Text(
+                        text = "Secure luggage storage near you",
+                        fontSize = 16.sp,
+                        color = AppColors.OnSurfaceVariant,
+                        fontFamily = customFontFamily
+                    )
+                }
+            }
+
+            item {
+                // Modern Search Card
+                ModernSearchCard { location, date, bags ->
                     val searchQuery = "$location | $date | $bags"
                     viewModel.addSearchQuery(searchQuery)
 
@@ -68,46 +109,41 @@ fun MainScreen(navController: NavController, viewModel: CustomerViewModel = view
 
                     navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
                 }
-
-                if (searchHistory.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        RecentSearchCard(searchHistory)
-                    }
-                } else {
-                    RecentSearchCard(searchHistory)
-                }
             }
 
-            BottomNavBar(navController = navController)
+            item {
+                // Recent Searches Section
+                ModernRecentSearches(searchHistory = searchHistory) { searchQuery ->
+                    // Handle recent search click
+                    val parts = searchQuery.split(" | ")
+                    if (parts.size == 3) {
+                        val encodedLocation = Uri.encode(parts[0])
+                        val encodedDate = Uri.encode(parts[1])
+                        val encodedBags = Uri.encode(parts[2])
+                        navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
+                    }
+                }
+            }
         }
     }
 }
 
-
-
-// Top Search Bar
-// --- Inside your ModernSearchBar ---
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModernSearchBar(onSearch: (location: String, date: String, bags: String) -> Unit) {
+fun ModernSearchCard(onSearch: (location: String, date: String, bags: String) -> Unit) {
     var location by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("Date") }
+    var date by remember { mutableStateOf("") }
     var bags by remember { mutableStateOf("2 bags") }
     var isBagDropdownExpanded by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
-    fun showDatePicker(onDateSelected: (String) -> Unit) {
+    fun showDatePicker() {
         val calendar = Calendar.getInstance()
         DatePickerDialog(
             context,
             { _, year, month, dayOfMonth ->
-                val selectedDate = "$dayOfMonth/${month + 1}/$year"
-                onDateSelected(selectedDate)
+                date = "$dayOfMonth/${month + 1}/$year"
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -118,173 +154,292 @@ fun ModernSearchBar(onSearch: (location: String, date: String, bags: String) -> 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp)
-            .height(56.dp),
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = AppColors.Primary.copy(alpha = 0.1f)
+            ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
+        colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
+        border = BorderStroke(1.dp, AppColors.Outline)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Search Icon Button (Clickable)
-            IconButton(onClick = {
-                onSearch(location, date, bags)
-            }) {
-                Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
             // Location Field
-            TextField(
-                value = location,
-                onValueChange = { location = it },
-                placeholder = { Text("Location", fontFamily = customFontFamily) },
-                singleLine = true,
-                modifier = Modifier.weight(1.5f),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
-                )
-            )
-
-            VerticalDivider()
-
-            // Date Section
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1.2f)
-            ) {
-                IconButton(onClick = { showDatePicker { date = it } }) {
-                    Icon(imageVector = Icons.Default.DateRange, contentDescription = "Pick Date")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = null,
+                        tint = AppColors.Primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Where",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.OnSurface,
+                        fontFamily = customFontFamily
+                    )
                 }
-                Text(
-                    text = date,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = customFontFamily,
-                    color = Color.DarkGray
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    placeholder = {
+                        Text(
+                            "Search for a location",
+                            color = AppColors.OnSurfaceVariant,
+                            fontFamily = customFontFamily
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AppColors.Primary,
+                        unfocusedBorderColor = AppColors.Outline,
+                        focusedContainerColor = AppColors.SurfaceVariant.copy(alpha = 0.3f),
+                        unfocusedContainerColor = AppColors.SurfaceVariant.copy(alpha = 0.3f)
+                    ),
+                    singleLine = true
                 )
             }
 
-            VerticalDivider()
-
-            // Bag Section
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1.3f)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Box {
-                    IconButton(onClick = { isBagDropdownExpanded = true }) {
+                // Date Field
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = "Select Bags"
+                            imageVector = Icons.Outlined.DateRange,
+                            contentDescription = null,
+                            tint = AppColors.Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "When",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = AppColors.OnSurface,
+                            fontFamily = customFontFamily
                         )
                     }
-
-                    DropdownMenu(
-                        expanded = isBagDropdownExpanded,
-                        onDismissRequest = { isBagDropdownExpanded = false }
+                    OutlinedButton(
+                        onClick = { showDatePicker() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = AppColors.SurfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        border = BorderStroke(1.dp, AppColors.Outline)
                     ) {
-                        (1..5).forEach { count ->
-                            DropdownMenuItem(
-                                text = { Text("$count bag${if (count > 1) "s" else ""}") },
-                                onClick = {
-                                    bags = if (count == 1) "1 bag" else "$count bags"
-                                    isBagDropdownExpanded = false
-                                }
+                        Text(
+                            text = date.ifEmpty { "Select date" },
+                            color = if (date.isEmpty()) AppColors.OnSurfaceVariant else AppColors.OnSurface,
+                            fontFamily = customFontFamily,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                // Bags Field
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.ShoppingCart,
+                            contentDescription = null,
+                            tint = AppColors.Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Bags",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = AppColors.OnSurface,
+                            fontFamily = customFontFamily
+                        )
+                    }
+                    Box {
+                        OutlinedButton(
+                            onClick = { isBagDropdownExpanded = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = AppColors.SurfaceVariant.copy(alpha = 0.3f)
+                            ),
+                            border = BorderStroke(1.dp, AppColors.Outline)
+                        ) {
+                            Text(
+                                text = bags,
+                                color = AppColors.OnSurface,
+                                fontFamily = customFontFamily,
+                                fontSize = 14.sp
                             )
+                        }
+
+                        DropdownMenu(
+                            expanded = isBagDropdownExpanded,
+                            onDismissRequest = { isBagDropdownExpanded = false }
+                        ) {
+                            (1..5).forEach { count ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "$count bag${if (count > 1) "s" else ""}",
+                                            fontFamily = customFontFamily
+                                        )
+                                    },
+                                    onClick = {
+                                        bags = if (count == 1) "1 bag" else "$count bags"
+                                        isBagDropdownExpanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
+            }
 
+            // Search Button
+            Button(
+                onClick = { onSearch(location, date, bags) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.Primary
+                ),
+                enabled = location.isNotEmpty() && date.isNotEmpty()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = bags,
-                    fontWeight = FontWeight.Light,
-                    fontFamily = customFontFamily,
-                    color = Color.DarkGray
+                    text = "Search Storage",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = customFontFamily
                 )
             }
         }
     }
 }
 
-
-
 @Composable
-fun VerticalDivider() {
-    Spacer(modifier = Modifier.width(10.dp))
-    Divider(
-        color = Color.Gray,
-        modifier = Modifier
-            .height(24.dp)
-            .width(1.dp)
-    )
-    Spacer(modifier = Modifier.width(10.dp))
-}
+fun ModernRecentSearches(
+    searchHistory: List<String>,
+    onSearchClick: (String) -> Unit
+) {
+    if (searchHistory.isEmpty()) return
 
-
-// Recent Searches Card
-@Composable
-fun RecentSearchCard(searchHistory: List<String>) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-
-        border = BorderStroke(2.dp, Color(0xFFB0B0B0)),
-
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Recent Searches",
-                    tint = Color(0xFF6A5ACD),
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Recent Searches",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4A4A4A),
-                    fontFamily = customFontFamily
-                )
-            }
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+                tint = AppColors.Primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = "Recent Searches",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AppColors.OnSurface,
+                fontFamily = customFontFamily
+            )
+        }
 
-            if (searchHistory.isEmpty()) {
-                Text(
-                    "No recent searches",
-                    fontSize = 16.sp,
-                    color = Color.Gray,
-                    fontFamily = customFontFamily
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
+            border = BorderStroke(1.dp, AppColors.Outline)
+        ) {
+            Column {
+                searchHistory.take(5).forEachIndexed { index, searchItem ->
+                    val parts = searchItem.split(" | ")
 
-                )
-            } else {
-                searchHistory.forEachIndexed { index, searchItem ->
-                    Column {
-                        Text(
-                            searchItem,
-                            fontSize = 16.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSearchClick(searchItem) }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocationOn,
+                            contentDescription = null,
+                            tint = AppColors.OnSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
                         )
-                        if (index < searchHistory.lastIndex) {
-                            Divider(color = Color(0xFFB0B0B0))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (parts.size >= 3) {
+                                Text(
+                                    text = parts[0],
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = AppColors.OnSurface,
+                                    fontFamily = customFontFamily,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "${parts[1]} • ${parts[2]}",
+                                    fontSize = 14.sp,
+                                    color = AppColors.OnSurfaceVariant,
+                                    fontFamily = customFontFamily,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            } else {
+                                Text(
+                                    text = searchItem,
+                                    fontSize = 16.sp,
+                                    color = AppColors.OnSurface,
+                                    fontFamily = customFontFamily,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = null,
+                            tint = AppColors.OnSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    if (index < searchHistory.lastIndex && index < 4) {
+                        HorizontalDivider(
+                            color = AppColors.Outline,
+                            thickness = 0.5.dp,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
                 }
             }
@@ -293,18 +448,21 @@ fun RecentSearchCard(searchHistory: List<String>) {
 }
 
 // Bottom Navigation Bar
-data class NavigationItem(val label: String, val icon: ImageVector)
+data class NavigationItem(val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
 @Composable
-fun BottomNavBar(navController: NavController) {
+fun ModernBottomNavBar(navController: NavController) {
     var selectedTab by remember { mutableStateOf(0) }
 
-    NavigationBar(containerColor = Color.White) {
+    NavigationBar(
+        containerColor = AppColors.Surface,
+        tonalElevation = 8.dp
+    ) {
         val items = listOf(
-            NavigationItem("Browse", Icons.Default.Search),
-            NavigationItem("Nearby", Icons.Default.Place),
-            NavigationItem("Bookings", Icons.Default.DateRange),
-            NavigationItem("Menu", Icons.Default.MoreVert)
+            NavigationItem("Search", Icons.Outlined.Search, Icons.Filled.Search),
+            NavigationItem("Nearby", Icons.Outlined.LocationOn, Icons.Filled.LocationOn),
+            NavigationItem("Bookings", Icons.Outlined.DateRange, Icons.Filled.DateRange),
+            NavigationItem("Profile", Icons.Outlined.Person, Icons.Filled.Person)
         )
 
         items.forEachIndexed { index, item ->
@@ -313,27 +471,27 @@ fun BottomNavBar(navController: NavController) {
                 onClick = { selectedTab = index },
                 icon = {
                     Icon(
-                        imageVector = item.icon,
+                        imageVector = if (selectedTab == index) item.selectedIcon else item.icon,
                         contentDescription = item.label,
-                        tint = if (selectedTab == index) Color(0xFF0072C6) else Color.Gray
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
                     Text(
                         text = item.label,
-                        color = if (selectedTab == index) Color(0xFF0072C6) else Color.Gray,
-                        fontFamily = customFontFamily
-
+                        fontFamily = customFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = if (selectedTab == index) FontWeight.Medium else FontWeight.Normal
                     )
-                }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = AppColors.Primary,
+                    selectedTextColor = AppColors.Primary,
+                    unselectedIconColor = AppColors.OnSurfaceVariant,
+                    unselectedTextColor = AppColors.OnSurfaceVariant,
+                    indicatorColor = AppColors.Primary.copy(alpha = 0.1f)
+                )
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewMainScreen() {
-    val navController = rememberNavController()
-    MainScreen(navController)
 }
