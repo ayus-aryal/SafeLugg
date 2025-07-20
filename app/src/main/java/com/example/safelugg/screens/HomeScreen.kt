@@ -1,5 +1,6 @@
 package com.example.safelugg.screens
 
+import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
@@ -30,53 +31,59 @@ import java.util.Calendar
 
 val customFontFamily = FontFamily(Font(R.font.inter))
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainScreen(navController: NavController, viewModel: CustomerViewModel = viewModel()) {
     val searchHistory = viewModel.recentSearches
     val insets = WindowInsets.systemBars.asPaddingValues()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                top = insets.calculateTopPadding() + 16.dp,
-                start = 16.dp,
-                end = 16.dp,
-                bottom = insets.calculateBottomPadding() + 8.dp
-            ),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+
+    Scaffold(
+        bottomBar = { BottomNavBar(navController) }
+    ) {  innerPadding->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f), // Allows content to take available space without pushing BottomNav off screen
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize()
+                .padding(
+                    top = insets.calculateTopPadding() + 16.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = insets.calculateBottomPadding() + 8.dp
+                ),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            ModernSearchBar { location, date, bags ->
-                val searchQuery = "$location | $date | $bags"
-                viewModel.addSearchQuery(searchQuery)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f), // Allows content to take available space without pushing BottomNav off screen
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                ModernSearchBar { location, date, bags ->
+                    val searchQuery = "$location | $date | $bags"
+                    viewModel.addSearchQuery(searchQuery)
 
-                val encodedLocation = Uri.encode(location)
-                val encodedDate = Uri.encode(date)
-                val encodedBags = Uri.encode(bags)
+                    val encodedLocation = Uri.encode(location)
+                    val encodedDate = Uri.encode(date)
+                    val encodedBags = Uri.encode(bags)
 
-                navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
-            }
+                    navController.navigate("search_result_screen/$encodedLocation/$encodedDate/$encodedBags")
+                }
 
-            if (searchHistory.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                if (searchHistory.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        RecentSearchCard(searchHistory)
+                    }
+                } else {
                     RecentSearchCard(searchHistory)
                 }
-            } else {
-                RecentSearchCard(searchHistory)
             }
-        }
 
-        BottomNavBar(navController = navController)
+            BottomNavBar(navController = navController)
+        }
     }
 }
 
