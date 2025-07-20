@@ -1,6 +1,5 @@
 package com.example.safelugg
 
-import SearchResultScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,8 +16,7 @@ import com.example.safelugg.myviewmodels.GoogleSignInViewModel
 import com.example.safelugg.screens.FillYourDetailsScreen
 import com.example.safelugg.screens.MainScreen
 import com.example.safelugg.screens.OnboardingScreen
-import com.example.safelugg.screens.SearchResultScreen1
-
+import com.example.safelugg.screens.SearchResultScreen
 import com.example.safelugg.screens.SplashScreen
 import com.example.safelugg.screens.WelcomeScreen
 import com.example.safelugg.ui.theme.SafeLuggTheme
@@ -76,7 +74,7 @@ fun SafeLugg() {
                 val date = backStackEntry.arguments?.getString("date") ?: ""
                 val bags = backStackEntry.arguments?.getString("bags") ?: ""
 
-                SearchResultScreen1(
+                SearchResultScreen(
                     location = location,
                     date = date,
                     bags = bags,
