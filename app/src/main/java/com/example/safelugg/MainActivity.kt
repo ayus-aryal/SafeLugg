@@ -39,7 +39,7 @@ fun SafeLugg() {
 
 
     SafeLuggTheme {
-        NavHost(navController = navController, startDestination = "home_screen") {
+        NavHost(navController = navController, startDestination = "splash_screen") {
 
             composable(route = "splash_screen") {
                 SplashScreen(navController)

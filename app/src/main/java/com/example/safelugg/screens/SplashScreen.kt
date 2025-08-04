@@ -1,7 +1,6 @@
 package com.example.safelugg.screens
 
-import android.annotation.SuppressLint
-import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -11,58 +10,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.coroutines.delay
 import com.example.safelugg.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.safelugg.utils.PreferenceHelper
+import kotlinx.coroutines.delay
 
-@SuppressLint("ContextCastToActivity")
 @Composable
 fun SplashScreen(navController: NavController) {
-    val auth = FirebaseAuth.getInstance()
-    val firestore = FirebaseFirestore.getInstance()
-    val context = LocalContext.current as Activity
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        delay(2000) // ⏳ Show splash for 2 seconds
+        delay(2000) // 2-second splash delay
 
-        val user = auth.currentUser
-        if (user != null) {
-            val userId = user.uid
+        val isLoggedIn = PreferenceHelper.isUserLoggedIn(context)
+        Log.d("SplashScreen", "Checking login status: $isLoggedIn")
 
-            firestore.collection("users").document(userId).get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val firstName = document.getString("firstName").orEmpty()
-                        val lastName = document.getString("lastName").orEmpty()
-                        val phoneNumber = document.getString("phoneNumber").orEmpty()
-
-                        if (firstName.isNotEmpty() && lastName.isNotEmpty() && phoneNumber.isNotEmpty()) {
-                            // ✅ Profile complete → Navigate to Home
-                            navController.navigate("home_screen") {
-                                popUpTo("splash_screen") { inclusive = true }
-                            }
-                        } else {
-                            // ⚠️ Profile incomplete → Fill Details
-                            navController.navigate("fill_details") {
-                                popUpTo("splash_screen") { inclusive = true }
-                            }
-                        }
-                    } else {
-                        // ⚠️ User not found in Firestore → Fill Details
-                        navController.navigate("fill_your_details") {
-                            popUpTo("splash_screen") { inclusive = true }
-                        }
-                    }
-                }
-                .addOnFailureListener {
-                    // 🔄 Firebase Error - Send to onboarding
-                    navController.navigate("onboarding_screen") {
-                        popUpTo("splash_screen") { inclusive = true }
-                    }
-                }
+        if (isLoggedIn) {
+            Log.d("SplashScreen", "User is logged in, navigating to home_screen")
+            navController.navigate("home_screen") {
+                popUpTo("splash_screen") { inclusive = true }
+            }
         } else {
-            // ❌ User not logged in → Go to Onboarding
+            Log.d("SplashScreen", "User not logged in, navigating to onboarding_screen")
             navController.navigate("onboarding_screen") {
                 popUpTo("splash_screen") { inclusive = true }
             }
@@ -74,7 +42,7 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo_splash_screen), // 🖼 Your app logo
+            painter = painterResource(id = R.drawable.logo_splash_screen),
             contentDescription = "App Logo",
             modifier = Modifier.size(500.dp)
         )
