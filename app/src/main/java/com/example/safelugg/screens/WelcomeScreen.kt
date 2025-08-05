@@ -63,10 +63,10 @@ fun WelcomeScreen(onGoogleSignInClick: () -> Unit) {
 
             // Logo with animation
             Image(
-                painter = painterResource(id = R.drawable.logo),
+                painter = painterResource(id = R.drawable.logo_splash_screen),
                 contentDescription = "SafeLugg Logo",
                 modifier = Modifier
-                    .size(200.dp)
+                    .size(400.dp)
                     .scale(logoScale)
                     .alpha(contentAlpha)
             )
