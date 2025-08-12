@@ -29,10 +29,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.safelugg.myviewmodels.CustomerViewModel
 import com.example.safelugg.myviewmodels.VendorResponse
@@ -69,10 +72,14 @@ fun SearchResultScreen(
     onEditClick: () -> Unit,
     onBackClick: () -> Unit,
     viewModel: CustomerViewModel = viewModel(),
+    navController: NavController
+
 ) {
     val searchResults by viewModel.searchResults
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
+
+
 
     // State for editable search parameters
     var currentLocation by remember { mutableStateOf(location) }
@@ -133,7 +140,8 @@ fun SearchResultScreen(
             errorMessage = errorMessage,
             searchResults = filteredAndSortedResults,
             screenWidth = screenWidth,
-            screenHeight = screenHeight
+            screenHeight = screenHeight,
+            navController = navController
         )
     }
 
@@ -181,7 +189,7 @@ fun HeaderSection(
     bags: String,
     onEditClick: () -> Unit,
     onBackClick: () -> Unit,
-    screenWidth: androidx.compose.ui.unit.Dp
+    screenWidth: Dp
 ) {
     // Responsive padding based on screen width
     val horizontalPadding = if (screenWidth < 360.dp) 12.dp else 16.dp
@@ -277,7 +285,7 @@ fun EditSearchDialog(
     onBagsChange: (String) -> Unit,
     onSearch: () -> Unit,
     onDismiss: () -> Unit,
-    screenWidth: androidx.compose.ui.unit.Dp
+    screenWidth: Dp
 ) {
     var editLocation by remember { mutableStateOf(location) }
     var editDate by remember { mutableStateOf(date) }
@@ -361,7 +369,7 @@ fun EditSearchDialog(
 
 @Composable
 fun FilterSection(
-    screenWidth: androidx.compose.ui.unit.Dp,
+    screenWidth: Dp,
     filterState: FilterState,
     onSortClick: () -> Unit,
     onFiltersClick: () -> Unit
@@ -406,7 +414,7 @@ fun FilterSection(
 fun FilterChip(
     text: String,
     hasDropdown: Boolean = false,
-    screenWidth: androidx.compose.ui.unit.Dp,
+    screenWidth: Dp,
     isSelected: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
@@ -592,11 +600,12 @@ fun FiltersDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                val newAmenities = if (tempFilterState.amenities.contains(amenity)) {
-                                    tempFilterState.amenities - amenity
-                                } else {
-                                    tempFilterState.amenities + amenity
-                                }
+                                val newAmenities =
+                                    if (tempFilterState.amenities.contains(amenity)) {
+                                        tempFilterState.amenities - amenity
+                                    } else {
+                                        tempFilterState.amenities + amenity
+                                    }
                                 tempFilterState = tempFilterState.copy(amenities = newAmenities)
                             }
                             .padding(vertical = 8.dp),
@@ -738,8 +747,10 @@ fun PropertiesList(
     isLoading: Boolean,
     errorMessage: String?,
     searchResults: List<VendorResponse>,
-    screenWidth: androidx.compose.ui.unit.Dp,
-    screenHeight: androidx.compose.ui.unit.Dp
+    screenWidth: Dp,
+    screenHeight: Dp,
+    navController: NavController
+
 ) {
     val horizontalPadding = if (screenWidth < 360.dp) 12.dp else 16.dp
     val titleFontSize = if (screenWidth < 360.dp) 16.sp else 18.sp
@@ -783,7 +794,8 @@ fun PropertiesList(
                     VendorCard(
                         vendor = vendor,
                         customFontFamily = customFontFamily,
-                        screenWidth = screenWidth
+                        screenWidth = screenWidth,
+                        navController = navController
                     )
                 }
             }
@@ -795,11 +807,13 @@ fun PropertiesList(
 fun VendorCard(
     vendor: VendorResponse,
     customFontFamily: FontFamily,
-    screenWidth: androidx.compose.ui.unit.Dp
+    screenWidth: Dp,
+    navController: NavController
 ) {
-    val images = vendor.imageUrls.ifEmpty {
+    val images = (vendor.imageUrls ?: emptyList()).ifEmpty {
         listOf("https://via.placeholder.com/300x200.png?text=No+Image")
     }
+
     val pagerState = rememberPagerState { images.size }
 
     // Responsive sizing
@@ -810,7 +824,9 @@ fun VendorCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = cardPadding),
+            .padding(horizontal = cardPadding)
+            .clickable {   navController.navigate("vendor_details/${vendor.vendorId}")
+            },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -876,7 +892,9 @@ fun VendorCard(
                 DotsIndicator(
                     totalDots = pagerState.pageCount,
                     selectedIndex = pagerState.currentPage,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 4.dp),
                     screenWidth = screenWidth
                 )
             }
@@ -896,8 +914,8 @@ fun VendorCard(
 fun VendorDetails(
     vendor: VendorResponse,
     customFontFamily: FontFamily,
-    screenWidth: androidx.compose.ui.unit.Dp,
-    contentPadding: androidx.compose.ui.unit.Dp
+    screenWidth: Dp,
+    contentPadding: Dp
 ) {
     Column(modifier = Modifier.padding(contentPadding)) {
         // Rating and Sponsored - Responsive
@@ -1067,7 +1085,7 @@ fun VendorDetails(
 fun PriceSection(
     vendor: VendorResponse,
     customFontFamily: FontFamily,
-    screenWidth: androidx.compose.ui.unit.Dp
+    screenWidth: Dp
 ) {
     Column(horizontalAlignment = Alignment.End) {
         Text(
@@ -1104,7 +1122,7 @@ fun DotsIndicator(
     totalDots: Int,
     selectedIndex: Int,
     modifier: Modifier = Modifier,
-    screenWidth: androidx.compose.ui.unit.Dp
+    screenWidth: Dp
 ) {
     val dotSize = if (screenWidth < 360.dp) 6.dp else 8.dp
     val selectedDotSize = if (screenWidth < 360.dp) 8.dp else 10.dp
@@ -1125,41 +1143,4 @@ fun DotsIndicator(
             )
         }
     }
-}
-
-// Preview functions for the responsive screen
-@Preview(showBackground = true, widthDp = 360, heightDp = 640)
-@Composable
-fun SearchResultScreenPreview() {
-    SearchResultScreen(
-        location = "New York",
-        date = "2024-03-15",
-        bags = "2",
-        onEditClick = { },
-        onBackClick = { }
-    )
-}
-
-@Preview(showBackground = true, widthDp = 320, heightDp = 568)
-@Composable
-fun SearchResultScreenSmallPreview() {
-    SearchResultScreen(
-        location = "New York",
-        date = "2024-03-15",
-        bags = "2",
-        onEditClick = { },
-        onBackClick = { }
-    )
-}
-
-@Preview(showBackground = true, widthDp = 411, heightDp = 731)
-@Composable
-fun SearchResultScreenLargePreview() {
-    SearchResultScreen(
-        location = "New York",
-        date = "2024-03-15",
-        bags = "2",
-        onEditClick = { },
-        onBackClick = { }
-    )
 }

@@ -18,6 +18,7 @@ import com.example.safelugg.screens.MainScreen
 import com.example.safelugg.screens.OnboardingScreen
 import com.example.safelugg.screens.SearchResultScreen
 import com.example.safelugg.screens.SplashScreen
+import com.example.safelugg.screens.VendorDetailsScreen
 import com.example.safelugg.screens.WelcomeScreen
 import com.example.safelugg.ui.theme.SafeLuggTheme
 
@@ -85,9 +86,22 @@ fun SafeLugg() {
                     onBackClick = {
                         navController.popBackStack()
                     },
-                    viewModel = customerViewModel
+                    viewModel = customerViewModel,
+                    navController
                 )
             }
+
+            composable(
+                route = "vendor_details/{vendorId}",
+                arguments = listOf(
+                    navArgument("vendorId") { type = NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val vendorId = backStackEntry.arguments?.getLong("vendorId") ?: 0L
+                VendorDetailsScreen(vendorId = vendorId)
+            }
+
+
 
 
 
