@@ -1,5 +1,14 @@
 package com.example.safelugg.screens
 
+
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,7 +28,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +38,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
+import com.example.safelugg.BuildConfig
 import com.example.safelugg.myviewmodels.*
 import kotlinx.coroutines.delay
 
@@ -226,7 +240,8 @@ fun VendorDetailsContent(details: VendorFullDetailsResponse) {
                 title = "Location",
                 icon = Icons.Filled.LocationOn
             ) {
-                LocationDetailsModern(details.locationDetails)
+                LocationDetailsModern(details.locationDetails,BuildConfig.MAPS_API_KEY
+                )
             }
 
             // Contact Information Card
@@ -546,13 +561,20 @@ fun StorageDetailsModern(storageDetails: StorageDetailsDto) {
     }
 }
 
+
+
+
 @Composable
-fun LocationDetailsModern(locationDetails: LocationDetailsDto) {
+fun LocationDetailsModern(
+    locationDetails: LocationDetailsDto,
+    apiKey: String
+) {
+    val context = LocalContext.current
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
         // Address
-        Row(
-            verticalAlignment = Alignment.Top
-        ) {
+        Row(verticalAlignment = Alignment.Top) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
                 contentDescription = "Address",
@@ -581,9 +603,7 @@ fun LocationDetailsModern(locationDetails: LocationDetailsDto) {
 
         // Landmark
         if (locationDetails.landmark.isNotEmpty()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.Place,
                     contentDescription = "Landmark",
@@ -605,10 +625,44 @@ fun LocationDetailsModern(locationDetails: LocationDetailsDto) {
             }
         }
 
-        // Distance (mock data since not in original)
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+        // Mini Map (Static Preview)
+        val mapUrl = remember(locationDetails.latitude, locationDetails.longitude, apiKey) {
+            "https://maps.googleapis.com/maps/api/staticmap?" +
+                    "center=${locationDetails.latitude},${locationDetails.longitude}" +
+                    "&zoom=15" +
+                    "&size=600x300" +
+                    "&markers=color:red%7C${locationDetails.latitude},${locationDetails.longitude}" +
+                    "&key=$apiKey"
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable {
+                    val gmmIntentUri = Uri.parse(
+                        "geo:${locationDetails.latitude},${locationDetails.longitude}?q=${locationDetails.latitude},${locationDetails.longitude}(${locationDetails.streetAddress})"
+                    )
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
+                        setPackage("com.google.android.apps.maps")
+                    }
+                    context.startActivity(mapIntent)
+                }
         ) {
+            SubcomposeAsyncImage(
+                model = mapUrl,
+                contentDescription = "Map Preview",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                loading = {
+                    ShimmerEffect()
+                }
+            )
+        }
+
+        // Distance (mock for now)
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.DirectionsWalk,
                 contentDescription = "Distance",
@@ -624,6 +678,37 @@ fun LocationDetailsModern(locationDetails: LocationDetailsDto) {
         }
     }
 }
+
+@Composable
+fun ShimmerEffect() {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = "shimmerAnim"
+    )
+
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            Color.LightGray.copy(alpha = 0.6f),
+            Color.LightGray.copy(alpha = 0.2f),
+            Color.LightGray.copy(alpha = 0.6f),
+        ),
+        start = androidx.compose.ui.geometry.Offset(translateAnim, translateAnim),
+        end = androidx.compose.ui.geometry.Offset(translateAnim + 200f, translateAnim + 200f)
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(brush)
+    )
+}
+
+
 
 @Composable
 fun ContactDetailsModern(personalDetails: PersonalDetailsDto) {
@@ -719,50 +804,52 @@ fun InfoChip(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewVendorDetails() {
-    VendorDetailsContent(
-        VendorFullDetailsResponse(
-            vendorID = 1,
-            personalDetails = PersonalDetailsDto(
-                businessName = "SafeKeep Storage Hub Near Airport",
-                ownerName = "Jethalal Gada",
-                phoneNumber = "+91 98765 43210",
-                email = "contact@safekeep.com"
-            ),
-            locationDetails = LocationDetailsDto(
-                country = "India",
-                state = "Gujarat",
-                city = "Rajkot",
-                postalCode = "360001",
-                streetAddress = "Plot no. 22, Airport Road",
-                landmark = "Opposite Metro Station",
-                locationText = "Near International Airport"
-            ),
-            storageDetails = StorageDetailsDto(
-                capacity = 75,
-                storageTypes = "Secure Lockers, Climate Controlled",
-                luggageSizes = setOf("Small", "Medium", "Large", "XL"),
-                hasCCTV = true,
-                hasStaff = true,
-                hasLocks = true,
-                securityNotes = "24/7 CCTV monitoring, biometric locks, on-site security staff",
-                openDays = setOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
-                openingTime = "06:00",
-                closingTime = "23:00",
-                is24x7 = false
-            ),
-            pricingDetails = PricingDetailsDto(
-                pricePerBag = 75.0,
-                note = "First 24 hours. ₹25 for each additional 12 hours."
-            ),
-            imageUrls = listOf(
-                "https://via.placeholder.com/400x240",
-                "https://via.placeholder.com/400x240",
-                "https://via.placeholder.com/400x240",
-                "https://via.placeholder.com/400x240"
-            )
-        )
-    )
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewVendorDetails() {
+//    VendorDetailsContent(
+//        VendorFullDetailsResponse(
+//            vendorID = 1,
+//            personalDetails = PersonalDetailsDto(
+//                businessName = "SafeKeep Storage Hub Near Airport",
+//                ownerName = "Jethalal Gada",
+//                phoneNumber = "+91 98765 43210",
+//                email = "contact@safekeep.com"
+//            ),
+//            locationDetails = LocationDetailsDto(
+//                country = "India",
+//                state = "Gujarat",
+//                city = "Rajkot",
+//                postalCode = "360001",
+//                streetAddress = "Plot no. 22, Airport Road",
+//                landmark = "Opposite Metro Station",
+//                locationText = "Near International Airport",
+//                latitude = 22.3039,
+//                longitude = 70.8022
+//            ),
+//            storageDetails = StorageDetailsDto(
+//                capacity = 75,
+//                storageTypes = "Secure Lockers, Climate Controlled",
+//                luggageSizes = setOf("Small", "Medium", "Large", "XL"),
+//                hasCCTV = true,
+//                hasStaff = true,
+//                hasLocks = true,
+//                securityNotes = "24/7 CCTV monitoring, biometric locks, on-site security staff",
+//                openDays = setOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+//                openingTime = "06:00",
+//                closingTime = "23:00",
+//                is24x7 = false
+//            ),
+//            pricingDetails = PricingDetailsDto(
+//                pricePerBag = 75.0,
+//                note = "First 24 hours. ₹25 for each additional 12 hours."
+//            ),
+//            imageUrls = listOf(
+//                "https://via.placeholder.com/400x240",
+//                "https://via.placeholder.com/400x240",
+//                "https://via.placeholder.com/400x240",
+//                "https://via.placeholder.com/400x240"
+//            )
+//        )
+//    )
+//}

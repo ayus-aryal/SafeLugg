@@ -18,6 +18,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "MAPS_API_KEY",
+            "\"${project.properties["MAPS_API_KEY"]}\""
+        )
     }
 
     buildTypes {
@@ -38,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -94,5 +100,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences-core:1.0.0")
 
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("com.google.maps.android:android-maps-utils:3.14.0")
+
 
 }

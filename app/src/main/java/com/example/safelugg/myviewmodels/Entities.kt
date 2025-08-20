@@ -1,5 +1,7 @@
 package com.example.safelugg.myviewmodels
 
+import com.google.android.gms.common.api.internal.ApiKey
+
 data class SearchRequest(
     val city: String,
     val date: String,
@@ -41,7 +43,9 @@ data class LocationDetailsDto(
     val postalCode: String,
     val streetAddress: String,
     val landmark: String,
-    val locationText: String
+    val locationText: String,
+    val latitude: Double,
+    val longitude: Double,
 )
 
 data class StorageDetailsDto(
@@ -62,3 +66,4 @@ data class PricingDetailsDto(
     val pricePerBag: Double,
     val note: String
 )
+
