@@ -1,3 +1,4 @@
+# ![SafeLugg Logo](https://raw.githubusercontent.com/your-username/safelugg/main/assets/logo.png) SafeLugg
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Android Build](https://img.shields.io/badge/Android-Build%20Passing-brightgreen)](#)
@@ -13,7 +14,6 @@ SafeLugg is a secure, convenient, and reliable luggage storage and management pl
 - [Vendor App](#vendor-app)
   - [Features](#features-1)
   - [Technology Stack](#technology-stack-1)
-- [Contribution](#contribution)
 - [License](#license)
 - [Screenshots](#screenshots)
 - [How It Works](#how-it-works)
@@ -32,13 +32,20 @@ The **SafeLugg Client App** is for travelers who need secure, short-term luggage
 - Search and filter storage locations by category and distance.
 
 ### Technology Stack
-| Layer | Technology | Logo |
-|-------|------------|------|
-| Frontend | Android Jetpack Compose | ![Jetpack Compose](https://img.shields.io/badge/Jetpack-Compose-orange?logo=jetbrains&logoColor=white) |
-| Authentication | Firebase Auth (Google Sign-In) | ![Firebase](https://img.shields.io/badge/Firebase-Auth-yellow?logo=firebase&logoColor=white) |
-| Notifications | Firebase Cloud Messaging | ![FCM](https://img.shields.io/badge/FCM-Notifications-blue?logo=firebase&logoColor=white) |
-| Backend API | Spring Boot | ![Spring Boot](https://img.shields.io/badge/Spring-Boot-green?logo=spring&logoColor=white) |
-| Database | PostgreSQL | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-blue?logo=postgresql&logoColor=white) |
+**Frontend & Mobile:**  
+![Jetpack Compose](https://img.shields.io/badge/Jetpack-Compose-orange?logo=jetbrains&logoColor=white)  
+
+**Authentication & Notifications:**  
+![Firebase Auth](https://img.shields.io/badge/Firebase-Auth-yellow?logo=firebase&logoColor=white) ![Firebase Cloud Messaging](https://img.shields.io/badge/FCM-Notifications-blue?logo=firebase&logoColor=white)  
+
+**Backend & API:**  
+![Spring Boot](https://img.shields.io/badge/Spring-Boot-green?logo=spring&logoColor=white) ![REST API](https://img.shields.io/badge/REST-API-lightgrey)  
+
+**Database & Cloud Storage:**  
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-blue?logo=postgresql&logoColor=white) ![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-blue?logo=cloudinary&logoColor=white)  
+
+**Payment & Version Control:**  
+![Razorpay](https://img.shields.io/badge/Razorpay-Payments-blue?logo=razorpay&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-VCS-black?logo=github&logoColor=white)  
 
 ---
 
@@ -54,20 +61,23 @@ The **SafeLugg Vendor App** is designed for storage partners to efficiently mana
 - Update storage availability and pricing dynamically.
 
 ### Technology Stack
-| Layer | Technology | Logo |
-|-------|------------|------|
-| Frontend | Android Jetpack Compose | ![Jetpack Compose](https://img.shields.io/badge/Jetpack-Compose-orange?logo=jetbrains&logoColor=white) |
-| Authentication | Firebase Auth | ![Firebase](https://img.shields.io/badge/Firebase-Auth-yellow?logo=firebase&logoColor=white) |
-| Notifications | Firebase Cloud Messaging | ![FCM](https://img.shields.io/badge/FCM-Notifications-blue?logo=firebase&logoColor=white) |
-| Backend API | Spring Boot | ![Spring Boot](https://img.shields.io/badge/Spring-Boot-green?logo=spring&logoColor=white) |
-| Database | PostgreSQL | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-blue?logo=postgresql&logoColor=white) |
+**Frontend & Mobile:**  
+![Jetpack Compose](https://img.shields.io/badge/Jetpack-Compose-orange?logo=jetbrains&logoColor=white)  
+
+**Authentication & Notifications:**  
+![Firebase Auth](https://img.shields.io/badge/Firebase-Auth-yellow?logo=firebase&logoColor=white) ![Firebase Cloud Messaging](https://img.shields.io/badge/FCM-Notifications-blue?logo=firebase&logoColor=white)  
+
+**Backend & API:**  
+![Spring Boot](https://img.shields.io/badge/Spring-Boot-green?logo=spring&logoColor=white) ![REST API](https://img.shields.io/badge/REST-API-lightgrey)  
+
+**Database & Cloud Storage:**  
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-blue?logo=postgresql&logoColor=white) ![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-blue?logo=cloudinary&logoColor=white)  
+
+**Payment & Version Control:**  
+![Razorpay](https://img.shields.io/badge/Razorpay-Payments-blue?logo=razorpay&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-VCS-black?logo=github&logoColor=white)  
 
 ---
 
-## Contribution
-Contributions are welcome! Please fork the repository and submit a pull request with a detailed description of your changes.
-
----
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
