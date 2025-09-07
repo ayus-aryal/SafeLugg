@@ -1,4 +1,3 @@
-# ![SafeLugg Logo](https://raw.githubusercontent.com/your-username/safelugg/main/assets/logo.png) SafeLugg
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Android Build](https://img.shields.io/badge/Android-Build%20Passing-brightgreen)](#)
