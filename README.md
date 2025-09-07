@@ -1,6 +1,6 @@
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Android Build](https://img.shields.io/badge/Android-Build%20Passing-brightgreen)](#)
-[![Spring Boot](https://img.shields.io/badge/Spring-Boot-blue)](#)
 
 SafeLugg is a secure, convenient, and reliable luggage storage and management platform designed for travelers and storage partners. It allows travelers to store luggage safely at nearby partner locations while vendors can efficiently manage storage requests and notifications.
 
@@ -32,10 +32,13 @@ The **SafeLugg Client App** is for travelers who need secure, short-term luggage
 - Search and filter storage locations by category and distance.
 
 ### Technology Stack
-- Android with Jetpack Compose
-- Firebase Authentication (Google Sign-In)
-- Firebase Cloud Messaging (FCM)
-- Spring Boot backend with PostgreSQL
+| Layer | Technology | Logo |
+|-------|------------|------|
+| Frontend | Android Jetpack Compose | ![Jetpack Compose](https://img.shields.io/badge/Jetpack-Compose-orange?logo=jetbrains&logoColor=white) |
+| Authentication | Firebase Auth (Google Sign-In) | ![Firebase](https://img.shields.io/badge/Firebase-Auth-yellow?logo=firebase&logoColor=white) |
+| Notifications | Firebase Cloud Messaging | ![FCM](https://img.shields.io/badge/FCM-Notifications-blue?logo=firebase&logoColor=white) |
+| Backend API | Spring Boot | ![Spring Boot](https://img.shields.io/badge/Spring-Boot-green?logo=spring&logoColor=white) |
+| Database | PostgreSQL | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-blue?logo=postgresql&logoColor=white) |
 
 ---
 
@@ -51,10 +54,18 @@ The **SafeLugg Vendor App** is designed for storage partners to efficiently mana
 - Update storage availability and pricing dynamically.
 
 ### Technology Stack
-- Android with Jetpack Compose
-- Firebase Authentication
-- Firebase Cloud Messaging (FCM)
-- Spring Boot backend with PostgreSQL
+| Layer | Technology | Logo |
+|-------|------------|------|
+| Frontend | Android Jetpack Compose | ![Jetpack Compose](https://img.shields.io/badge/Jetpack-Compose-orange?logo=jetbrains&logoColor=white) |
+| Authentication | Firebase Auth | ![Firebase](https://img.shields.io/badge/Firebase-Auth-yellow?logo=firebase&logoColor=white) |
+| Notifications | Firebase Cloud Messaging | ![FCM](https://img.shields.io/badge/FCM-Notifications-blue?logo=firebase&logoColor=white) |
+| Backend API | Spring Boot | ![Spring Boot](https://img.shields.io/badge/Spring-Boot-green?logo=spring&logoColor=white) |
+| Database | PostgreSQL | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-blue?logo=postgresql&logoColor=white) |
+
+---
+
+## Contribution
+Contributions are welcome! Please fork the repository and submit a pull request with a detailed description of your changes.
 
 ---
 
