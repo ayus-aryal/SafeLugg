@@ -58,8 +58,6 @@ The **SafeLugg Vendor App** is designed for storage partners to efficiently mana
 
 ---
 
----
-
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
