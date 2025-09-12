@@ -3,12 +3,14 @@ package com.example.safelugg.myviewmodels
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object UserRetrofitInstance {
-    val api: UserApiService by lazy {
+object ProvideBookingApi {
+    private const val BASE_URL = "https://0b9677d4eb8a.ngrok-free.app" // your backend URL
+
+    val bookingApi: BookingApi by lazy {
         Retrofit.Builder()
-            .baseUrl("https://0b9677d4eb8a.ngrok-free.app/") // Replace with actual IP and port
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(UserApiService::class.java)
+            .create(BookingApi::class.java)
     }
 }
