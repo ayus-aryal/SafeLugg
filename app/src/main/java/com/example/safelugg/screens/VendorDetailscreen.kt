@@ -39,6 +39,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -95,6 +96,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -117,12 +119,54 @@ import com.example.safelugg.myviewmodels.StorageDetailsDto
 import com.example.safelugg.myviewmodels.VendorFullDetailsResponse
 import com.example.safelugg.myviewmodels.VendorViewModel
 import com.example.safelugg.utils.PreferenceHelper
+import com.example.safelugg.utils.booking.BookingUtils.validateBookingTime
+import com.example.safelugg.utils.booking.VendorOperatingHours
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun parseCustomTime(timeString: String): LocalTime? {
+    if (timeString.isBlank()) return null
+
+    return try {
+        val cleanInput = timeString.trim().uppercase()
+
+        // Handle 12-hour format (with AM/PM)
+        if (cleanInput.contains("AM") || cleanInput.contains("PM")) {
+            val formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+            LocalTime.parse(cleanInput, formatter)
+        }
+        // Handle 24-hour format (HH:MM)
+        else if (cleanInput.contains(":")) {
+            val parts = cleanInput.split(":")
+            if (parts.size == 2) {
+                val hour = parts[0].toIntOrNull()
+                val minute = parts[1].toIntOrNull()
+
+                if (hour != null && minute != null &&
+                    hour in 0..23 && minute in 0..59) {
+                    LocalTime.of(hour, minute)
+                } else null
+            } else null
+        }
+        // Handle hour-only input (like "14" or "2")
+        else {
+            val hour = cleanInput.toIntOrNull()
+            if (hour != null && hour in 0..23) {
+                LocalTime.of(hour, 0)
+            } else null
+        }
+    } catch (e: Exception) {
+        null
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun VendorDetailsScreen(
     vendorId: Long,
@@ -201,6 +245,24 @@ fun VendorDetailsScreen(
             }
 
             vendorDetails != null -> {
+
+                val vendorOperatingHours = VendorOperatingHours(
+                    is24x7 = vendorDetails!!.storageDetails.is24x7,
+                    openTime = if (!vendorDetails!!.storageDetails.is24x7) {
+                        LocalTime.parse(
+                            vendorDetails!!.storageDetails.openingTime,
+                            DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+                        )
+                    } else null,
+                    closeTime = if (!vendorDetails!!.storageDetails.is24x7) {
+                        LocalTime.parse(
+                            vendorDetails!!.storageDetails.closingTime,
+                            DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+                        )
+                    } else null,
+                    openDays = vendorDetails!!.storageDetails.openDays
+                )
+
                 VendorDetailsContent(
                     details = vendorDetails!!,
                     screenWidth = screenWidth,
@@ -209,7 +271,8 @@ fun VendorDetailsScreen(
                     vendorId = vendorId,
                     initialBags = "\\d+".toRegex().find(bags)?.value?.toIntOrNull() ?: 0,
                     bookingApi = bookingApi,
-                    onBookingCreated = onBookingCreated
+                    onBookingCreated = onBookingCreated,
+                    vendorOperatingHours = vendorOperatingHours
                 )
             }
 
@@ -239,8 +302,10 @@ fun VendorDetailsContent(
     vendorId: Long,
     initialBags: Int,
     bookingApi: BookingApi,
-    onBookingCreated: (BookingResponse) -> Unit
-) {
+    onBookingCreated: (BookingResponse) -> Unit,
+    vendorOperatingHours: VendorOperatingHours
+
+    ) {
     val isTablet = screenWidth > 600.dp
     val heroHeight = if (isTablet) 320.dp else minOf(screenHeight * 0.35f, 280.dp)
     val horizontalPadding = if (isTablet) 24.dp else 16.dp
@@ -806,6 +871,83 @@ fun VendorDetailsContent(
                                                 }
                                             }
                                         }
+
+                                        Spacer(modifier = Modifier.height(20.dp))
+
+                                        // Custom time input section
+                                        Column {
+                                            Text(
+                                                text = "Or enter custom time:",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            var customTimeText by remember { mutableStateOf("") }
+                                            var timeInputError by remember { mutableStateOf<String?>(null) }
+
+                                            OutlinedTextField(
+                                                value = customTimeText,
+                                                onValueChange = { input ->
+                                                    // Allow only digits, colon, and spaces, limit length
+                                                    if (input.all { it.isDigit() || it == ':' || it == ' ' || it.isLetter() } && input.length <= 8) {
+                                                        customTimeText = input
+                                                        timeInputError = null
+                                                    }
+                                                },
+                                                label = { Text("Time") },
+                                                placeholder = { Text("HH:MM or HH:MM AM/PM") },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(12.dp),
+                                                isError = timeInputError != null,
+                                                supportingText = if (timeInputError != null) {
+                                                    { Text(timeInputError!!, color = MaterialTheme.colorScheme.error) }
+                                                } else {
+                                                    { Text("Format: 14:30 or 2:30 PM", style = MaterialTheme.typography.bodySmall) }
+                                                },
+                                                keyboardOptions = KeyboardOptions(
+                                                    keyboardType = KeyboardType.Text,
+                                                    imeAction = ImeAction.Done
+                                                ),
+                                                keyboardActions = KeyboardActions(
+                                                    onDone = {
+                                                        val parsedTime = parseCustomTime(customTimeText.trim())
+                                                        if (parsedTime != null) {
+                                                            selectedTime = parsedTime
+                                                            showTimePicker = false
+                                                            customTimeText = ""
+                                                            timeInputError = null
+                                                        } else {
+                                                            timeInputError = "Invalid time format"
+                                                        }
+                                                    }
+                                                )
+                                            )
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            Button(
+                                                onClick = {
+                                                    val parsedTime = parseCustomTime(customTimeText.trim())
+                                                    if (parsedTime != null) {
+                                                        selectedTime = parsedTime
+                                                        showTimePicker = false
+                                                        customTimeText = ""
+                                                        timeInputError = null
+                                                    } else {
+                                                        timeInputError = "Please enter a valid time (e.g., 14:30 or 2:30 PM)"
+                                                    }
+                                                },
+                                                enabled = customTimeText.isNotBlank(),
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text("Set Custom Time")
+                                            }
+                                        }
                                     }
                                 }
                             } else {
@@ -1039,6 +1181,19 @@ fun VendorDetailsContent(
                                         return@Button
                                     }
 
+                                    // Validate booking time against vendor operating hours
+                                    val validationResult = validateBookingTime(
+                                        selectedDate = selectedDate!!,
+                                        selectedTime = selectedTime!!,
+                                        durationHours = hours,
+                                        vendorOperatingHours = vendorOperatingHours
+                                    )
+
+                                    if (!validationResult.isValid) {
+                                        Toast.makeText(ctx, validationResult.errorMessage, Toast.LENGTH_LONG).show()
+                                        return@Button
+                                    }
+
                                     val currentUserId = PreferenceHelper.getUserId(ctx)
                                     if (currentUserId <= 0L) {
                                         Toast.makeText(ctx, "Please log in first", Toast.LENGTH_SHORT).show()
@@ -1109,6 +1264,7 @@ fun VendorDetailsContent(
                     tonalElevation = 8.dp
                 )
             }
+        }
 
             if (showPaymentDialog) {
                 AlertDialog(
@@ -1126,7 +1282,7 @@ fun VendorDetailsContent(
 
 
         }
-    }
+
 
 @Composable
 fun ImageGallerySection(
