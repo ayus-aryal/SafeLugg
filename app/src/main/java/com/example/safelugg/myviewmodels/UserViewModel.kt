@@ -1,5 +1,6 @@
 package com.example.safelugg.myviewmodels
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -7,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.safelugg.model.UserRequest
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.*
+import com.example.safelugg.model.UserResponse
+import com.example.safelugg.utils.PreferenceHelper
 
 
 class UserViewModel : ViewModel() {
@@ -20,11 +23,12 @@ class UserViewModel : ViewModel() {
     val success: State<Boolean> = _success
 
     fun createUser(
+        context: Context,
         firstName: String,
         lastName: String,
         email: String,
         phoneNumber: String,
-        onSuccess: () -> Unit,
+        onSuccess: (UserResponse) -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
@@ -36,12 +40,30 @@ class UserViewModel : ViewModel() {
                     email = email,
                     phoneNumber = phoneNumber
                 )
-                val response = UserRetrofitInstance.api.createUser(userRequest)
-                if (response.isSuccessful) {
-                    Log.d("UserViewModel", "User creation successful")
 
-                    _success.value = true
-                    onSuccess()
+                val response = UserRetrofitInstance.api.createUser(userRequest)
+
+                if (response.isSuccessful) {
+                    val createdUser = response.body()  // ✅ this contains the UserResponse from backend
+                    if (createdUser != null) {
+                        Log.d("UserViewModel", "User creation successful: $createdUser")
+
+                        // Save userId to SharedPreferences
+                        PreferenceHelper.setUserId(context, createdUser.id)
+                        PreferenceHelper.setUserEmail(context, createdUser.email) // NEW
+
+                        Log.d("UserFlow", "Saved user ID: ${createdUser.id}")
+
+
+                        _success.value = true
+                        onSuccess(createdUser) // ✅ pass the user object back
+                    } else {
+                        val error = "Empty response body"
+                        Log.e("UserViewModel", error)
+
+                        _errorMessage.value = error
+                        onError(error)
+                    }
                 } else {
                     val error = "Server Error: ${response.code()}"
                     Log.e("UserViewModel", error)
@@ -60,4 +82,7 @@ class UserViewModel : ViewModel() {
             }
         }
     }
+
+
 }
+

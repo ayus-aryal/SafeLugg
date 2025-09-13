@@ -110,20 +110,31 @@ class GoogleSignInViewModel : ViewModel() {
             if (response.isSuccessful) {
                 val checkUserResponse: CheckUserResponse? = response.body()
                 if (checkUserResponse?.exists == true) {
+                    // ✅ Mark user as logged in
                     PreferenceHelper.setUserLoggedIn(context, true)
 
-                    // User exists → go to home
+                    // ✅ Save user ID for returning users
+                    checkUserResponse.id?.let { userId ->
+                        Log.d("LoginFlow", "Fetched user ID for returning user: $userId")
+                        PreferenceHelper.setUserId(context, userId)
+                    } ?: Log.e("LoginFlow", "User ID is null for returning user")
+
+                    // Navigate to home screen
                     navController.navigate("home_screen") {
                         popUpTo("splash_screen") { inclusive = true }
                     }
                 } else {
-                    // User does not exist → go to form
+                    // User does not exist → go to FillYourDetails screen
                     navController.navigate("fill_your_details") {
                         popUpTo("splash_screen") { inclusive = true }
                     }
                 }
             } else {
-                Toast.makeText(context, "Server error: ${response.code()}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Server error: ${response.code()}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         } catch (e: HttpException) {
             Toast.makeText(context, "HTTP error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -131,5 +142,6 @@ class GoogleSignInViewModel : ViewModel() {
             Toast.makeText(context, "Unexpected error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 }

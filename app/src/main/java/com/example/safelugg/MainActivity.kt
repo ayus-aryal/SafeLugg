@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,6 +14,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.safelugg.myviewmodels.CustomerViewModel
 import com.example.safelugg.myviewmodels.GoogleSignInViewModel
+import com.example.safelugg.myviewmodels.ProvideBookingApi.bookingApi
+import com.example.safelugg.myviewmodels.UserRetrofitInstance
 import com.example.safelugg.screens.FillYourDetailsScreen
 import com.example.safelugg.screens.MainScreen
 import com.example.safelugg.screens.OnboardingScreen
@@ -21,6 +24,7 @@ import com.example.safelugg.screens.SplashScreen
 import com.example.safelugg.screens.VendorDetailsScreen
 import com.example.safelugg.screens.WelcomeScreen
 import com.example.safelugg.ui.theme.SafeLuggTheme
+import com.example.safelugg.utils.PreferenceHelper
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,17 +38,24 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SafeLugg() {
+    val context = LocalContext.current
     val navController = rememberNavController()
     val googleSignInViewModel = GoogleSignInViewModel()
     val customerViewModel: CustomerViewModel = viewModel()  // Shared instance
+    val userApiService = UserRetrofitInstance.api             // <-- your Retrofit instance
+// <-- you need to store email in SharedPreferences at login
+
 
 
     SafeLuggTheme {
         NavHost(navController = navController, startDestination = "splash_screen") {
 
             composable(route = "splash_screen") {
-                SplashScreen(navController)
+                SplashScreen(
+                    navController = navController,
+                )
             }
+
 
             composable(route = "onboarding_screen") {
                 OnboardingScreen(navController)
@@ -92,14 +103,23 @@ fun SafeLugg() {
             }
 
             composable(
-                route = "vendor_details/{vendorId}",
+                route = "vendor_details/{vendorId}/{bags}",
                 arguments = listOf(
-                    navArgument("vendorId") { type = NavType.LongType }
+                    navArgument("vendorId") { type = NavType.LongType },
+                    navArgument("bags") { type = NavType.StringType } // since you are using String in search
+
                 )
             ) { backStackEntry ->
-                val vendorId = backStackEntry.arguments?.getLong("vendorId") ?: 0L
-                VendorDetailsScreen(vendorId = vendorId)
-            }
+                val vendorId = backStackEntry.arguments?.getLong("vendorId") ?: 0
+                val bags = backStackEntry.arguments?.getString("bags") ?: ""
+
+                VendorDetailsScreen(
+                    vendorId = vendorId,
+                    bags = bags,
+                    viewModel = viewModel(),
+                    bookingApi = bookingApi,
+                    onBookingCreated = { booking -> /* handle booking */ }
+                )            }
 
 
 

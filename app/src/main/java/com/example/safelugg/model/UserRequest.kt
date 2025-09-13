@@ -6,3 +6,11 @@ data class UserRequest(
     val email: String,
     val phoneNumber: String
 )
+
+data class UserResponse(
+    val id: Long,
+    val firstName: String,
+    val lastName: String,
+    val email: String,
+    val phoneNumber: String
+)

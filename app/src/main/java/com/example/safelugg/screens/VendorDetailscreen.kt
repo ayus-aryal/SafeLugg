@@ -1,8 +1,12 @@
 package com.example.safelugg.screens
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -67,6 +71,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,20 +93,31 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.safelugg.BuildConfig
+import com.example.safelugg.model.BookingCreateRequest
+import com.example.safelugg.model.BookingResponse
+import com.example.safelugg.myviewmodels.BookingApi
+import com.example.safelugg.myviewmodels.BookingViewModel
 import com.example.safelugg.myviewmodels.LocationDetailsDto
 import com.example.safelugg.myviewmodels.PersonalDetailsDto
 import com.example.safelugg.myviewmodels.PricingDetailsDto
+import com.example.safelugg.myviewmodels.ProvideBookingApi.bookingApi
 import com.example.safelugg.myviewmodels.StorageDetailsDto
 import com.example.safelugg.myviewmodels.VendorFullDetailsResponse
 import com.example.safelugg.myviewmodels.VendorViewModel
+import com.example.safelugg.utils.PreferenceHelper
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun VendorDetailsScreen(
     vendorId: Long,
+    bags: String,
     viewModel: VendorViewModel = viewModel(),
-    onBookNowClick: (Long) -> Unit = {}
+    bookingApi: BookingApi,
+    onBookNowClick: (Long) -> Unit = {},
+    onBookingCreated: (BookingResponse) -> Unit
 ) {
-    val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
@@ -113,10 +129,13 @@ fun VendorDetailsScreen(
 
 
 
+
+
     // Fetch only once
     LaunchedEffect(Unit) {
         viewModel.fetchVendorDetails(vendorId)
     }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
@@ -172,7 +191,11 @@ fun VendorDetailsScreen(
                     details = vendorDetails!!,
                     screenWidth = screenWidth,
                     screenHeight = screenHeight,
-                    onBookNowClick = { onBookNowClick(vendorId) }
+                    onBookNowClick = { onBookNowClick(vendorId) },
+                    vendorId = vendorId,
+                    initialBags = "\\d+".toRegex().find(bags)?.value?.toIntOrNull() ?: 0,
+                    bookingApi = bookingApi,
+                    onBookingCreated = onBookingCreated
                 )
             }
 
@@ -192,17 +215,24 @@ fun VendorDetailsScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun VendorDetailsContent(
     details: VendorFullDetailsResponse,
     screenWidth: androidx.compose.ui.unit.Dp,
     screenHeight: androidx.compose.ui.unit.Dp,
-    onBookNowClick: () -> Unit
+    onBookNowClick: () -> Unit,
+    vendorId: Long,
+    initialBags: Int,
+    bookingApi: BookingApi,
+    onBookingCreated: (BookingResponse) -> Unit
 ) {
     val isTablet = screenWidth > 600.dp
     val heroHeight = if (isTablet) 320.dp else minOf(screenHeight * 0.35f, 280.dp)
     val horizontalPadding = if (isTablet) 24.dp else 16.dp
     val cardPadding = if (isTablet) 24.dp else 20.dp
+    var showPaymentDialog by remember { mutableStateOf(false) }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Main content
@@ -432,6 +462,10 @@ fun VendorDetailsContent(
             var showDialog by remember { mutableStateOf(false) }
             var hoursText by remember { mutableStateOf("") }
             val ctx = LocalContext.current
+            var loading by remember { mutableStateOf(false) } // <--- REQUIRED
+            val scope = rememberCoroutineScope()
+
+
 
 
             Button(
@@ -468,47 +502,110 @@ fun VendorDetailsContent(
             }
             if (showDialog) {
                 AlertDialog(
-                    onDismissRequest = { showDialog = false },
-                    title = { Text("Book Storage") },
+                    onDismissRequest = { if (!loading) showDialog = false },
+                    title = { Text("Book storage") },
                     text = {
-                        OutlinedTextField(
-                            value = hoursText,
-                            onValueChange = { input ->
-                                if (input.all { it.isDigit() }) hoursText = input
-                            },
-                            label = { Text("Enter hours") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Column {
+                            Text("Enter number of hours you want to book:")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = hoursText,
+                                onValueChange = { input ->
+                                    if (input.all { it.isDigit() }) hoursText = input
+                                },
+                                label = { Text("Hours") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (loading) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
                     },
                     confirmButton = {
                         TextButton(
+                            enabled = !loading,
                             onClick = {
                                 val hours = hoursText.toIntOrNull()
                                 if (hours == null || hours <= 0) {
-                                    Toast.makeText(ctx, "Enter valid hours", Toast.LENGTH_SHORT)
-                                        .show()
+                                    Toast.makeText(ctx, "Enter a valid number of hours", Toast.LENGTH_SHORT).show()
                                     return@TextButton
                                 }
-                                showDialog = false
-                                // ✅ Later we’ll call the API here
-                                onBookNowClick()
+
+                                val currentUserId = PreferenceHelper.getUserId(ctx)
+                                Log.d("BookingFlow", "Retrieved user ID for booking: $currentUserId")
+
+                                if (currentUserId <= 0L) {
+                                    Toast.makeText(ctx, "Please log in first", Toast.LENGTH_SHORT).show()
+                                    return@TextButton
+                                }
+
+                                loading = true
+                                val start = LocalDateTime.now()
+                                val end = start.plusHours(hours.toLong())
+                                val bookingDate = start.toLocalDate()
+
+                                val request = BookingCreateRequest(
+                                    vendorId = vendorId,
+                                    bookingDate = bookingDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                                    scheduledStartTime = start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                    scheduledEndTime = end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                    noOfBags = initialBags,
+                                    expectedHours = hours
+                                )
+
+                                Log.d("BookingRequest", "Sending request: $request, userId=$currentUserId")
+
+                                scope.launch {
+                                    try {
+                                        val response = bookingApi.createBooking(currentUserId, request)
+                                        loading = false
+                                        showDialog = false
+                                        onBookingCreated(response)
+                                        showPaymentDialog = true
+                                    } catch (e: Exception) {
+                                        loading = false
+                                        e.printStackTrace()
+                                        Toast.makeText(ctx, "Failed to create booking: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             }
                         ) {
                             Text("Confirm")
                         }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDialog = false }) {
+                        TextButton(onClick = { if (!loading) showDialog = false }) {
                             Text("Cancel")
                         }
                     }
                 )
             }
+
+            if (showPaymentDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPaymentDialog = false },
+                    title = { Text("Proceed to Payment") },
+                    text = { Text("Redirecting you to payment gateway...") },
+                    confirmButton = {
+                        TextButton(onClick = { showPaymentDialog = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+        }
+
+
         }
     }
-}
 
 @Composable
 fun ImageGallerySection(
@@ -1130,162 +1227,3 @@ fun ShimmerEffect() {
     )
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewVendorDetailsScreenPhone() {
-    MaterialTheme {
-        VendorDetailsContent(
-            details = getSampleVendorDetails(),
-            screenWidth = 360.dp,
-            screenHeight = 640.dp,
-            onBookNowClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 800, heightDp = 1280)
-@Composable
-fun PreviewVendorDetailsScreenTablet() {
-    MaterialTheme {
-        VendorDetailsContent(
-            details = getSampleVendorDetails(),
-            screenWidth = 800.dp,
-            screenHeight = 1280.dp,
-            onBookNowClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun PreviewPricingCard() {
-    MaterialTheme {
-        PricingCard(
-            pricingDetails = PricingDetailsDto(
-                pricePerBag = 75.0,
-                note = "First 24 hours. ₹25 for each additional 12 hours."
-            ),
-            isTablet = false,
-            cardPadding = 20.dp
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewFeatureIcons() {
-    MaterialTheme {
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier.padding(16.dp)
-        ) {
-            item {
-                FeatureIcon(
-                    icon = Icons.Filled.Security,
-                    label = "CCTV",
-                    isTablet = false
-                )
-            }
-            item {
-                FeatureIcon(
-                    icon = Icons.Filled.Lock,
-                    label = "Lockers",
-                    isTablet = false
-                )
-            }
-            item {
-                FeatureIcon(
-                    icon = Icons.Filled.PersonPin,
-                    label = "Staffed",
-                    isTablet = false
-                )
-            }
-            item {
-                FeatureIcon(
-                    icon = Icons.Filled.AccessTime,
-                    label = "24/7",
-                    isTablet = false
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewStorageDetailsCard() {
-    MaterialTheme {
-        ModernInfoCard(
-            title = "Storage Details",
-            icon = Icons.Filled.Inventory,
-            isTablet = false,
-            cardPadding = 20.dp
-        ) {
-            StorageDetailsModern(
-                storageDetails = StorageDetailsDto(
-                    capacity = 75,
-                    storageTypes = "Secure Lockers, Climate Controlled",
-                    luggageSizes = setOf("Small", "Medium", "Large", "XL"),
-                    hasCCTV = true,
-                    hasStaff = true,
-                    hasLocks = true,
-                    securityNotes = "24/7 CCTV monitoring, biometric locks, on-site security staff",
-                    openDays = setOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
-                    openingTime = "06:00",
-                    closingTime = "23:00",
-                    is24x7 = false
-                ),
-                isTablet = false
-            )
-        }
-    }
-}
-
-// Sample data function for previews
-private fun getSampleVendorDetails(): VendorFullDetailsResponse {
-    return VendorFullDetailsResponse(
-        vendorID = 1,
-        personalDetails = PersonalDetailsDto(
-            businessName = "SafeKeep Storage Hub Near Airport",
-            ownerName = "Jethalal Gada",
-            phoneNumber = "+91 98765 43210",
-            email = "contact@safekeep.com"
-        ),
-        locationDetails = LocationDetailsDto(
-            country = "India",
-            state = "Gujarat",
-            city = "Rajkot",
-            postalCode = "360001",
-            streetAddress = "Plot no. 22, Airport Road",
-            landmark = "Opposite Metro Station",
-            locationText = "Near International Airport",
-            latitude = 22.3039,
-            longitude = 70.8022
-        ),
-        storageDetails = StorageDetailsDto(
-            capacity = 75,
-            storageTypes = "Secure Lockers, Climate Controlled",
-            luggageSizes = setOf("Small", "Medium", "Large", "XL"),
-            hasCCTV = true,
-            hasStaff = true,
-            hasLocks = true,
-            securityNotes = "24/7 CCTV monitoring, biometric locks, on-site security staff",
-            openDays = setOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
-            openingTime = "06:00",
-            closingTime = "23:00",
-            is24x7 = false
-        ),
-        pricingDetails = PricingDetailsDto(
-            pricePerBag = 75.0,
-            note = "First 24 hours. ₹25 for each additional 12 hours."
-        ),
-        imageUrls = listOf(
-            "https://via.placeholder.com/400x240/1976D2/FFFFFF?text=Storage+1",
-            "https://via.placeholder.com/400x240/4CAF50/FFFFFF?text=Storage+2",
-            "https://via.placeholder.com/400x240/FF9800/FFFFFF?text=Storage+3",
-            "https://via.placeholder.com/400x240/9C27B0/FFFFFF?text=Storage+4",
-            "https://via.placeholder.com/400x240/F44336/FFFFFF?text=Storage+5"
-        )
-    )
-}

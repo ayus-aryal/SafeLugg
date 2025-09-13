@@ -254,12 +254,18 @@ fun FillYourDetailsScreen(navController: NavController) {
                     errorMessage = null
 
                     userViewModel.createUser(
+                        context = context,
                         firstName = firstName,
                         lastName = lastName,
                         email = userEmail,
                         phoneNumber = phoneNumber,
-                        onSuccess = {
+                        onSuccess = { user->
+                            PreferenceHelper.setUserEmail(context, user.email)
+
                             PreferenceHelper.setUserLoggedIn(context, true)
+                            PreferenceHelper.setUserId(context, user.id)
+
+
                             Log.d("FillYourDetailsScreen", "User marked as logged in")
 
                             isLoading = false

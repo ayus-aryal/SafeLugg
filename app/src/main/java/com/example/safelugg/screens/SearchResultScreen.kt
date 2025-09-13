@@ -141,7 +141,8 @@ fun SearchResultScreen(
             searchResults = filteredAndSortedResults,
             screenWidth = screenWidth,
             screenHeight = screenHeight,
-            navController = navController
+            navController = navController,
+            bags = bags
         )
     }
 
@@ -749,7 +750,9 @@ fun PropertiesList(
     searchResults: List<VendorResponse>,
     screenWidth: Dp,
     screenHeight: Dp,
-    navController: NavController
+    navController: NavController,
+    bags: String // <- add this
+
 
 ) {
     val horizontalPadding = if (screenWidth < 360.dp) 12.dp else 16.dp
@@ -795,7 +798,8 @@ fun PropertiesList(
                         vendor = vendor,
                         customFontFamily = customFontFamily,
                         screenWidth = screenWidth,
-                        navController = navController
+                        navController = navController,
+                        bags = bags
                     )
                 }
             }
@@ -808,7 +812,8 @@ fun VendorCard(
     vendor: VendorResponse,
     customFontFamily: FontFamily,
     screenWidth: Dp,
-    navController: NavController
+    navController: NavController,
+    bags: String
 ) {
     val images = (vendor.imageUrls ?: emptyList()).ifEmpty {
         listOf("https://via.placeholder.com/300x200.png?text=No+Image")
@@ -825,7 +830,7 @@ fun VendorCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = cardPadding)
-            .clickable {   navController.navigate("vendor_details/${vendor.vendorId}")
+            .clickable {   navController.navigate("vendor_details/${vendor.vendorId}/$bags")
             },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
