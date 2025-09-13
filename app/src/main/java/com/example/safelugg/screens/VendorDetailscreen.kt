@@ -1,5 +1,7 @@
 package com.example.safelugg.screens
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -13,6 +15,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +34,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +44,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BookOnline
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Error
@@ -54,6 +63,7 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -61,7 +71,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -106,7 +118,9 @@ import com.example.safelugg.myviewmodels.VendorFullDetailsResponse
 import com.example.safelugg.myviewmodels.VendorViewModel
 import com.example.safelugg.utils.PreferenceHelper
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -464,6 +478,10 @@ fun VendorDetailsContent(
             val ctx = LocalContext.current
             var loading by remember { mutableStateOf(false) } // <--- REQUIRED
             val scope = rememberCoroutineScope()
+            var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+            var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
+            var showPaymentDialog by remember { mutableStateOf(false) }
+
 
 
 
@@ -501,91 +519,594 @@ fun VendorDetailsContent(
                 }
             }
             if (showDialog) {
+                var showDatePicker by remember { mutableStateOf(false) }
+                var showTimePicker by remember { mutableStateOf(false) }
+
                 AlertDialog(
                     onDismissRequest = { if (!loading) showDialog = false },
-                    title = { Text("Book storage") },
-                    text = {
-                        Column {
-                            Text("Enter number of hours you want to book:")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = hoursText,
-                                onValueChange = { input ->
-                                    if (input.all { it.isDigit() }) hoursText = input
-                                },
-                                label = { Text("Hours") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
                             )
-                            if (loading) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Book Storage",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            if (showDatePicker) {
+                                // Custom Date Picker
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(16.dp)
                                 ) {
-                                    CircularProgressIndicator()
+                                    Column(
+                                        modifier = Modifier.padding(20.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Select Date",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            IconButton(
+                                                onClick = { showDatePicker = false }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Close",
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(20.dp))
+
+                                        // Quick date options
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            val today = LocalDate.now()
+                                            listOf("Today", "Tomorrow", "Day After").forEachIndexed { index, label ->
+                                                val date = today.plusDays(index.toLong())
+                                                val isSelected = selectedDate == date
+
+                                                Surface(
+                                                    onClick = {
+                                                        selectedDate = date
+                                                        showDatePicker = false
+                                                    },
+                                                    modifier = Modifier.weight(1f),
+                                                    color = if (isSelected)
+                                                        MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.surface,
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    border = BorderStroke(
+                                                        1.dp,
+                                                        if (isSelected)
+                                                            MaterialTheme.colorScheme.primary
+                                                        else MaterialTheme.colorScheme.outline
+                                                    )
+                                                ) {
+                                                    Column(
+                                                        modifier = Modifier.padding(12.dp),
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Text(
+                                                            text = label,
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            color = if (isSelected)
+                                                                MaterialTheme.colorScheme.onPrimary
+                                                            else MaterialTheme.colorScheme.onSurface,
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                        Text(
+                                                            text = date.format(DateTimeFormatter.ofPattern("MMM dd")),
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = if (isSelected)
+                                                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                                            else MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        // Calendar grid for current month
+                                        val today = LocalDate.now()
+                                        val firstDayOfMonth = today.withDayOfMonth(1)
+                                        val daysInMonth = today.lengthOfMonth()
+                                        val startDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
+
+                                        Text(
+                                            text = today.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier.padding(bottom = 12.dp)
+                                        )
+
+                                        // Days of week header
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceEvenly
+                                        ) {
+                                            listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
+                                                Text(
+                                                    text = day,
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.weight(1f),
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        // Calendar grid
+                                        for (week in 0..5) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceEvenly
+                                            ) {
+                                                for (dayIndex in 0..6) {
+                                                    val dayNumber = week * 7 + dayIndex - startDayOfWeek + 1
+
+                                                    if (dayNumber in 1..daysInMonth) {
+                                                        val date = today.withDayOfMonth(dayNumber)
+                                                        val isSelected = selectedDate == date
+                                                        val isToday = date == LocalDate.now()
+                                                        val isPast = date.isBefore(LocalDate.now())
+
+                                                        Surface(
+                                                            onClick = {
+                                                                if (!isPast) {
+                                                                    selectedDate = date
+                                                                    showDatePicker = false
+                                                                }
+                                                            },
+                                                            modifier = Modifier
+                                                                .weight(1f)
+                                                                .aspectRatio(1f)
+                                                                .padding(2.dp),
+                                                            color = when {
+                                                                isSelected -> MaterialTheme.colorScheme.primary
+                                                                isToday -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                                                else -> Color.Transparent
+                                                            },
+                                                            shape = CircleShape,
+                                                            border = if (isToday && !isSelected)
+                                                                BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                                                            else null
+                                                        ) {
+                                                            Box(
+                                                                contentAlignment = Alignment.Center,
+                                                                modifier = Modifier.fillMaxSize()
+                                                            ) {
+                                                                Text(
+                                                                    text = dayNumber.toString(),
+                                                                    style = MaterialTheme.typography.bodyMedium,
+                                                                    color = when {
+                                                                        isPast -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                                                        isSelected -> MaterialTheme.colorScheme.onPrimary
+                                                                        else -> MaterialTheme.colorScheme.onSurface
+                                                                    },
+                                                                    fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal
+                                                                )
+                                                            }
+                                                        }
+                                                    } else {
+                                                        Spacer(modifier = Modifier.weight(1f))
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (showTimePicker) {
+                                // Custom Time Picker
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(20.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Select Time",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            IconButton(
+                                                onClick = { showTimePicker = false }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Close",
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(20.dp))
+
+                                        // Quick time options
+                                        LazyVerticalGrid(
+                                            columns = GridCells.Fixed(3),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            val timeOptions = listOf(
+                                                "09:00", "10:00", "11:00",
+                                                "12:00", "13:00", "14:00",
+                                                "15:00", "16:00", "17:00",
+                                                "18:00", "19:00", "20:00"
+                                            )
+
+                                            items(timeOptions.size) { index ->
+                                                val timeStr = timeOptions[index]
+                                                val time = LocalTime.parse(timeStr)
+                                                val isSelected = selectedTime == time
+
+                                                Surface(
+                                                    onClick = {
+                                                        selectedTime = time
+                                                        showTimePicker = false
+                                                    },
+                                                    color = if (isSelected)
+                                                        MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.surface,
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    border = BorderStroke(
+                                                        1.dp,
+                                                        if (isSelected)
+                                                            MaterialTheme.colorScheme.primary
+                                                        else MaterialTheme.colorScheme.outline
+                                                    )
+                                                ) {
+                                                    Text(
+                                                        text = timeStr,
+                                                        modifier = Modifier.padding(16.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = if (isSelected)
+                                                            MaterialTheme.colorScheme.onPrimary
+                                                        else MaterialTheme.colorScheme.onSurface,
+                                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Main booking form
+                                // Date and Time Section
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "When do you need storage?",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            // Date Picker Button
+                                            Surface(
+                                                onClick = { showDatePicker = true },
+                                                modifier = Modifier.weight(1f),
+                                                color = if (selectedDate != null)
+                                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                                else MaterialTheme.colorScheme.surface,
+                                                shape = RoundedCornerShape(12.dp),
+                                                border = BorderStroke(
+                                                    1.dp,
+                                                    if (selectedDate != null)
+                                                        MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.outline
+                                                )
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(16.dp),
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CalendarMonth,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(24.dp),
+                                                        tint = if (selectedDate != null)
+                                                            MaterialTheme.colorScheme.primary
+                                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Text(
+                                                        text = selectedDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "Select Date",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = if (selectedDate != null) FontWeight.SemiBold else FontWeight.Normal,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
+
+                                            // Time Picker Button
+                                            Surface(
+                                                onClick = { showTimePicker = true },
+                                                modifier = Modifier.weight(1f),
+                                                color = if (selectedTime != null)
+                                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                                else MaterialTheme.colorScheme.surface,
+                                                shape = RoundedCornerShape(12.dp),
+                                                border = BorderStroke(
+                                                    1.dp,
+                                                    if (selectedTime != null)
+                                                        MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.outline
+                                                )
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(16.dp),
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.AccessTime,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(24.dp),
+                                                        tint = if (selectedTime != null)
+                                                            MaterialTheme.colorScheme.primary
+                                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Text(
+                                                        text = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "Select Time",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = if (selectedTime != null) FontWeight.SemiBold else FontWeight.Normal,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Duration Section
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Timer,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "Duration (Hours)",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        OutlinedTextField(
+                                            value = hoursText,
+                                            onValueChange = { input ->
+                                                if (input.all { it.isDigit() } && input.length <= 3) hoursText = input
+                                            },
+                                            label = {
+                                                Text(
+                                                    "Enter hours",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            },
+                                            placeholder = {
+                                                Text(
+                                                    "e.g., 2",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                                )
+                                            },
+                                            singleLine = true,
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            trailingIcon = {
+                                                if (hoursText.isNotEmpty()) {
+                                                    Text(
+                                                        text = if (hoursText.toIntOrNull() == 1) "hour" else "hours",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.padding(end = 8.dp)
+                                                    )
+                                                }
+                                            }
+                                        )
+
+                                        // Duration suggestions
+                                        if (hoursText.isEmpty()) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            LazyRow(
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                items(5) { index ->
+                                                    val hours = listOf("1", "2", "4", "8", "24")[index]
+                                                    FilterChip(
+                                                        text = "$hours ${if (hours == "1") "hr" else "hrs"}",
+                                                        onClick = { hoursText = hours },
+                                                        screenWidth = 120.dp
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (loading) {
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp),
+                                                strokeWidth = 3.dp
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(
+                                                text = "Creating your booking...",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     confirmButton = {
-                        TextButton(
-                            enabled = !loading,
-                            onClick = {
-                                val hours = hoursText.toIntOrNull()
-                                if (hours == null || hours <= 0) {
-                                    Toast.makeText(ctx, "Enter a valid number of hours", Toast.LENGTH_SHORT).show()
-                                    return@TextButton
-                                }
-
-                                val currentUserId = PreferenceHelper.getUserId(ctx)
-                                Log.d("BookingFlow", "Retrieved user ID for booking: $currentUserId")
-
-                                if (currentUserId <= 0L) {
-                                    Toast.makeText(ctx, "Please log in first", Toast.LENGTH_SHORT).show()
-                                    return@TextButton
-                                }
-
-                                loading = true
-                                val start = LocalDateTime.now()
-                                val end = start.plusHours(hours.toLong())
-                                val bookingDate = start.toLocalDate()
-
-                                val request = BookingCreateRequest(
-                                    vendorId = vendorId,
-                                    bookingDate = bookingDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                                    scheduledStartTime = start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                    scheduledEndTime = end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                    noOfBags = initialBags,
-                                    expectedHours = hours
-                                )
-
-                                Log.d("BookingRequest", "Sending request: $request, userId=$currentUserId")
-
-                                scope.launch {
-                                    try {
-                                        val response = bookingApi.createBooking(currentUserId, request)
-                                        loading = false
-                                        showDialog = false
-                                        onBookingCreated(response)
-                                        showPaymentDialog = true
-                                    } catch (e: Exception) {
-                                        loading = false
-                                        e.printStackTrace()
-                                        Toast.makeText(ctx, "Failed to create booking: ${e.message}", Toast.LENGTH_LONG).show()
+                        if (!showDatePicker && !showTimePicker) {
+                            Button(
+                                enabled = !loading,
+                                onClick = {
+                                    val hours = hoursText.toIntOrNull()
+                                    if (hours == null || hours <= 0) {
+                                        Toast.makeText(ctx, "Enter a valid number of hours", Toast.LENGTH_SHORT).show()
+                                        return@Button
                                     }
+
+                                    if (selectedDate == null || selectedTime == null) {
+                                        Toast.makeText(ctx, "Please select date and time", Toast.LENGTH_SHORT).show()
+                                        return@Button
+                                    }
+
+                                    val currentUserId = PreferenceHelper.getUserId(ctx)
+                                    if (currentUserId <= 0L) {
+                                        Toast.makeText(ctx, "Please log in first", Toast.LENGTH_SHORT).show()
+                                        return@Button
+                                    }
+
+                                    // Combine date + time
+                                    val start = LocalDateTime.of(selectedDate, selectedTime)
+                                    val end = start.plusHours(hours.toLong())
+
+                                    val request = BookingCreateRequest(
+                                        vendorId = vendorId,
+                                        bookingDate = start.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                                        scheduledStartTime = start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                        scheduledEndTime = end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                        noOfBags = initialBags,
+                                        expectedHours = hours
+                                    )
+
+                                    scope.launch {
+                                        loading = true
+                                        try {
+                                            val response = bookingApi.createBooking(currentUserId, request)
+                                            loading = false
+                                            showDialog = false
+                                            onBookingCreated(response)
+                                            showPaymentDialog = true
+                                        } catch (e: Exception) {
+                                            loading = false
+                                            e.printStackTrace()
+                                            Toast.makeText(ctx, "Failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                if (!loading) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
                                 }
+                                Text(
+                                    text = if (loading) "Booking..." else "Confirm Booking",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
-                        ) {
-                            Text("Confirm")
                         }
                     },
                     dismissButton = {
-                        TextButton(onClick = { if (!loading) showDialog = false }) {
-                            Text("Cancel")
+                        if (!showDatePicker && !showTimePicker) {
+                            TextButton(
+                                onClick = { if (!loading) showDialog = false }
+                            ) {
+                                Text(
+                                    text = "Cancel",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
                         }
-                    }
+                    },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(20.dp),
+                    tonalElevation = 8.dp
                 )
             }
 
