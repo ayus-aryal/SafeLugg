@@ -1,3 +1,6 @@
+
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -22,6 +25,11 @@ android {
             "String",
             "MAPS_API_KEY",
             "\"${project.properties["MAPS_API_KEY"]}\""
+        )
+        buildConfigField(
+            "String",
+            "RAZORPAY_KEY_ID",
+            "\"${project.properties["RAZORPAY_KEY_ID"]}\""
         )
     }
 
@@ -101,6 +109,11 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.google.maps.android:android-maps-utils:3.14.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+    implementation("com.razorpay:checkout:1.6.25")
+
+
 
 
 }

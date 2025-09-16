@@ -1,8 +1,7 @@
 package com.example.safelugg.screens
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
-import android.content.Context
+
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -74,7 +73,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -100,21 +98,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
-import com.example.safelugg.BuildConfig
 import com.example.safelugg.model.BookingCreateRequest
 import com.example.safelugg.model.BookingResponse
 import com.example.safelugg.myviewmodels.BookingApi
-import com.example.safelugg.myviewmodels.BookingViewModel
 import com.example.safelugg.myviewmodels.LocationDetailsDto
 import com.example.safelugg.myviewmodels.PersonalDetailsDto
 import com.example.safelugg.myviewmodels.PricingDetailsDto
-import com.example.safelugg.myviewmodels.ProvideBookingApi.bookingApi
 import com.example.safelugg.myviewmodels.StorageDetailsDto
 import com.example.safelugg.myviewmodels.VendorFullDetailsResponse
 import com.example.safelugg.myviewmodels.VendorViewModel
@@ -127,6 +121,13 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.core.net.toUri
+import com.example.safelugg.BuildConfig
+import com.example.safelugg.MainActivity
+import com.example.safelugg.myviewmodels.PaymentRetrofitInstance
+import com.example.safelugg.utils.RazorpayCheckoutHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -499,7 +500,7 @@ fun VendorDetailsContent(
                 ) {
                     LocationDetailsModern(
                         locationDetails = details.locationDetails,
-                        apiKey = BuildConfig.MAPS_API_KEY,
+                        apiKey = com.example.safelugg.BuildConfig.MAPS_API_KEY,
                         isTablet = isTablet
                     )
                 }
@@ -1221,11 +1222,61 @@ fun VendorDetailsContent(
                                             showDialog = false
                                             onBookingCreated(response)
                                             showPaymentDialog = true
+
+                                            Log.d("Razorpay", "Key: ${BuildConfig.RAZORPAY_KEY_ID}")
+
+
+                                            // 2) initiate payment for that booking on server
+                                            val paymentResp = PaymentRetrofitInstance.api.initiatePayment(response.bookingId)
+                                            if (!paymentResp.isSuccessful) {
+                                                loading = false
+                                                showDialog = false
+                                                Toast.makeText(ctx, "Payment initiation failed: ${paymentResp.code()}", Toast.LENGTH_LONG).show()
+                                                return@launch
+                                            }
+                                            val paymentInit = paymentResp.body() ?: run {
+                                                loading = false
+                                                showDialog = false
+                                                Toast.makeText(ctx, "Empty response from payment init", Toast.LENGTH_LONG).show()
+                                                return@launch
+                                            }
+
+                                            // 3) store paymentId in Activity so MainActivity can verify after checkout
+                                            val activity = ctx as? Activity
+                                            if (activity is MainActivity) {
+                                                activity.lastInitiatedPaymentId = paymentInit.paymentId
+                                            }
+
+                                            // 4) start Razorpay checkout
+                                            val amountPaise = (paymentInit.amount * 100).toInt() // amount in rupees -> paise
+                                            val keyId = "rzp_test_RGASttiAoqXee1"
+                                            val orderId = paymentInit.razorpayOrderId
+
+                                            // Start checkout on the activity
+                                            withContext(Dispatchers.Main) {
+                                                val activity = ctx as? Activity
+                                                if (activity != null) {
+                                                    Log.d("Razorpay", "Key being used: $keyId")  // Log here on main thread
+                                                    RazorpayCheckoutHelper.startCheckout(activity, keyId, orderId, amountPaise, "SafeLugg")
+                                                } else {
+                                                    Toast.makeText(ctx, "Unable to start payment (context not Activity)", Toast.LENGTH_LONG).show()
+                                                }
+                                            }
+
+                                            // UI update — you can keep dialog open until checkout finishes or close it:
+                                            loading = false
+                                            showDialog = false
+
+
+
+
                                         } catch (e: Exception) {
                                             loading = false
                                             e.printStackTrace()
                                             Toast.makeText(ctx, "Failed: ${e.message}", Toast.LENGTH_LONG).show()
                                         }
+
+
                                     }
                                 },
                                 modifier = Modifier.padding(horizontal = 8.dp),
@@ -1720,9 +1771,8 @@ fun LocationDetailsModern(
                 .height(mapHeight)
                 .clip(RoundedCornerShape(12.dp))
                 .clickable {
-                    val gmmIntentUri = Uri.parse(
-                        "geo:${locationDetails.latitude},${locationDetails.longitude}?q=${locationDetails.latitude},${locationDetails.longitude}(${locationDetails.streetAddress})"
-                    )
+                    val gmmIntentUri =
+                        "geo:${locationDetails.latitude},${locationDetails.longitude}?q=${locationDetails.latitude},${locationDetails.longitude}(${locationDetails.streetAddress})".toUri()
                     val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
                         setPackage("com.google.android.apps.maps")
                     }
