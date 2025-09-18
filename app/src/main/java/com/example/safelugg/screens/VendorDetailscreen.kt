@@ -1637,18 +1637,7 @@ fun VendorDetailsContent(
             }
 
             // Payment Dialog
-            if (showPaymentDialog) {
-                AlertDialog(
-                    onDismissRequest = { showPaymentDialog = false },
-                    title = { Text("Proceed to Payment") },
-                    text = { Text("Redirecting you to payment gateway...") },
-                    confirmButton = {
-                        TextButton(onClick = { showPaymentDialog = false }) {
-                            Text("OK")
-                        }
-                    }
-                )
-            }
+
         }
     }
 
