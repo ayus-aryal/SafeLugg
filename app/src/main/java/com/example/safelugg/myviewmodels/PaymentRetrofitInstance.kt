@@ -4,7 +4,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object PaymentRetrofitInstance {
-    private const val BASE_URL = "https://4e03af3df835.ngrok-free.app" // emulator -> host, change for device/real server
+    private const val BASE_URL = "https://29fe1d288e54.ngrok-free.app" // emulator -> host, change for device/real server
 
     private val retrofit by lazy {
         Retrofit.Builder()
