@@ -1,6 +1,5 @@
 package com.example.safelugg.model
 
-import com.google.maps.android.Status
 
 data class BookingCreateRequest(
     val vendorId: Long,
@@ -20,8 +19,11 @@ data class BookingResponse(
     val scheduledEndTime: String,
     val noOfBags: Int,
     val expectedHours: Int,
-    val status: Status,
+    val status: String,
     val totalAmount: Double,
     val amountPaid: Double,
-    val remainingAmount: Double
+    val remainingAmount: Double,
+
+    val razorpayOrderId: String?,
+    val razorpayKeyId: String?
 )

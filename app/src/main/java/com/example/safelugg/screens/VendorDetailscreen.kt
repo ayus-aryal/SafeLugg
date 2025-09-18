@@ -1636,7 +1636,6 @@ fun VendorDetailsContent(
 
             }
 
-            // Payment Dialog
 
         }
     }

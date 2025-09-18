@@ -24,6 +24,9 @@ data class PaymentResponseDTO(
     val amount: java.lang.Double,
     val currency: String,
     val status: String,
-    val razorpayOrderId: String?,
-    val razorpayPaymentId: String?
+//    val razorpayOrderId: String?,
+//    val razorpayPaymentId: String?
+
+    @SerializedName("razorpayOrderId") val razorpayOrderId: String,
+    @SerializedName("razorpayPaymentId") val razorpayPaymentId: String
 )
