@@ -4,7 +4,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ProvideBookingApi {
-    private const val BASE_URL = "https://29fe1d288e54.ngrok-free.app" // your backend URL
+    private const val BASE_URL = "https://658d3a603878.ngrok-free.app" // your backend URL
 
     val bookingApi: BookingApi by lazy {
         Retrofit.Builder()

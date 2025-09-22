@@ -102,6 +102,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -218,7 +219,9 @@ fun VendorDetailsScreen(
                         Text(
                             text = "Loading vendor details...",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            color = Color.Gray,
+                            fontFamily = customFontFamily
+
                         )
                     }
                 }
@@ -243,7 +246,9 @@ fun VendorDetailsScreen(
                         Text(
                             text = "Error: $errorMessage",
                             color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            fontFamily = customFontFamily
+
                         )
                     }
                 }
@@ -289,7 +294,9 @@ fun VendorDetailsScreen(
                     Text(
                         text = "No Data Found",
                         modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -382,7 +389,9 @@ fun VendorDetailsContent(
                         text = "4.2★",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = if (isTablet) 18.sp else 16.sp
+                        fontSize = if (isTablet) 18.sp else 16.sp,
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -401,7 +410,9 @@ fun VendorDetailsContent(
                         MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    fontFamily = customFontFamily
+
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -429,7 +440,9 @@ fun VendorDetailsContent(
                             MaterialTheme.typography.bodyLarge
                         else
                             MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = Color.Gray,
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -594,7 +607,9 @@ fun VendorDetailsContent(
                         text = "Book Storage Now",
                         fontSize = if (isTablet) 18.sp else 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = Color.White,
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -619,7 +634,9 @@ fun VendorDetailsContent(
                             Text(
                                 text = "Book Storage",
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = customFontFamily
+
                             )
                         }
                     },
@@ -647,7 +664,9 @@ fun VendorDetailsContent(
                                             Text(
                                                 text = "Select Date",
                                                 style = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.SemiBold
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontFamily = customFontFamily
+
                                             )
                                             IconButton(
                                                 onClick = { showDatePicker = false }
@@ -703,7 +722,9 @@ fun VendorDetailsContent(
                                                             color = if (isSelected)
                                                                 MaterialTheme.colorScheme.onPrimary
                                                             else MaterialTheme.colorScheme.onSurface,
-                                                            fontWeight = FontWeight.Medium
+                                                            fontWeight = FontWeight.Medium,
+                                                            fontFamily = customFontFamily
+
                                                         )
                                                         Text(
                                                             text = date.format(
@@ -716,7 +737,9 @@ fun VendorDetailsContent(
                                                                 MaterialTheme.colorScheme.onPrimary.copy(
                                                                     alpha = 0.8f
                                                                 )
-                                                            else MaterialTheme.colorScheme.onSurfaceVariant
+                                                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                            fontFamily = customFontFamily
+
                                                         )
                                                     }
                                                 }
@@ -735,7 +758,9 @@ fun VendorDetailsContent(
                                             text = today.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
-                                            modifier = Modifier.padding(bottom = 12.dp)
+                                            modifier = Modifier.padding(bottom = 12.dp),
+                                            fontFamily = customFontFamily
+
                                         )
 
                                         // Days of week header
@@ -757,7 +782,9 @@ fun VendorDetailsContent(
                                                     style = MaterialTheme.typography.labelMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     modifier = Modifier.weight(1f),
-                                                    textAlign = TextAlign.Center
+                                                    textAlign = TextAlign.Center,
+                                                    fontFamily = customFontFamily
+
                                                 )
                                             }
                                         }
@@ -822,7 +849,9 @@ fun VendorDetailsContent(
                                                                         isSelected -> MaterialTheme.colorScheme.onPrimary
                                                                         else -> MaterialTheme.colorScheme.onSurface
                                                                     },
-                                                                    fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal
+                                                                    fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
+                                                                    fontFamily = customFontFamily
+
                                                                 )
                                                             }
                                                         }
@@ -852,7 +881,9 @@ fun VendorDetailsContent(
                                             Text(
                                                 text = "Select Time",
                                                 style = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.SemiBold
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontFamily = customFontFamily
+
                                             )
                                             IconButton(
                                                 onClick = { showTimePicker = false }
@@ -909,7 +940,9 @@ fun VendorDetailsContent(
                                                             MaterialTheme.colorScheme.onPrimary
                                                         else MaterialTheme.colorScheme.onSurface,
                                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                                        textAlign = TextAlign.Center
+                                                        textAlign = TextAlign.Center,
+                                                        fontFamily = customFontFamily
+
                                                     )
                                                 }
                                             }
@@ -923,7 +956,9 @@ fun VendorDetailsContent(
                                                 text = "Or enter custom time:",
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.Medium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontFamily = customFontFamily
+
                                             )
 
                                             Spacer(modifier = Modifier.height(12.dp))
@@ -954,14 +989,17 @@ fun VendorDetailsContent(
                                                     {
                                                         Text(
                                                             timeInputError!!,
-                                                            color = MaterialTheme.colorScheme.error
-                                                        )
+                                                            color = MaterialTheme.colorScheme.error,
+                                                            fontFamily = customFontFamily
+                                                            )
                                                     }
                                                 } else {
                                                     {
                                                         Text(
                                                             "Format: 14:30 or 2:30 PM",
-                                                            style = MaterialTheme.typography.bodySmall
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            fontFamily = customFontFamily
+
                                                         )
                                                     }
                                                 },
@@ -1025,7 +1063,9 @@ fun VendorDetailsContent(
                                             text = "When do you need storage?",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontFamily = customFontFamily
+
                                         )
 
                                         Spacer(modifier = Modifier.height(12.dp))
@@ -1070,7 +1110,9 @@ fun VendorDetailsContent(
                                                         ) ?: "Select Date",
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = if (selectedDate != null) FontWeight.SemiBold else FontWeight.Normal,
-                                                        textAlign = TextAlign.Center
+                                                        textAlign = TextAlign.Center,
+                                                        fontFamily = customFontFamily
+
                                                     )
                                                 }
                                             }
@@ -1111,7 +1153,9 @@ fun VendorDetailsContent(
                                                         ) ?: "Select Time",
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = if (selectedTime != null) FontWeight.SemiBold else FontWeight.Normal,
-                                                        textAlign = TextAlign.Center
+                                                        textAlign = TextAlign.Center,
+                                                        fontFamily = customFontFamily
+
                                                     )
                                                 }
                                             }
@@ -1144,7 +1188,9 @@ fun VendorDetailsContent(
                                                 text = "Duration (Hours)",
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontFamily = customFontFamily
+
                                             )
                                         }
 
@@ -1159,7 +1205,9 @@ fun VendorDetailsContent(
                                             label = {
                                                 Text(
                                                     "Enter hours",
-                                                    style = MaterialTheme.typography.bodyMedium
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontFamily = customFontFamily
+
                                                 )
                                             },
                                             placeholder = {
@@ -1168,7 +1216,9 @@ fun VendorDetailsContent(
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
                                                         alpha = 0.6f
-                                                    )
+                                                    ),
+                                                    fontFamily = customFontFamily
+
                                                 )
                                             },
                                             singleLine = true,
@@ -1181,7 +1231,9 @@ fun VendorDetailsContent(
                                                         text = if (hoursText.toIntOrNull() == 1) "hour" else "hours",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        modifier = Modifier.padding(end = 8.dp)
+                                                        modifier = Modifier.padding(end = 8.dp),
+                                                        fontFamily = customFontFamily
+
                                                     )
                                                 }
                                             }
@@ -1231,7 +1283,9 @@ fun VendorDetailsContent(
                                             Text(
                                                 text = "Creating your booking...",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurface
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                fontFamily = customFontFamily
+
                                             )
                                         }
                                     }
@@ -1323,7 +1377,9 @@ fun VendorDetailsContent(
                                 Text(
                                     text = if (loading) "Booking..." else "Confirm Booking",
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = customFontFamily
+
                                 )
                             }
                         }
@@ -1333,7 +1389,8 @@ fun VendorDetailsContent(
                             TextButton(onClick = { if (!loading) showDialog = false }) {
                                 Text(
                                     text = "Cancel",
-                                    style = MaterialTheme.typography.labelLarge
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontFamily = customFontFamily
                                 )
                             }
                         }
@@ -1378,7 +1435,9 @@ fun VendorDetailsContent(
                                 text = "Review Your Booking",
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontFamily = customFontFamily
+
                                 )
                             )
                             IconButton(
@@ -1434,7 +1493,9 @@ fun VendorDetailsContent(
                                         text = "Booking Summary",
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontFamily = customFontFamily
+
                                         )
                                     )
                                 }
@@ -1498,7 +1559,9 @@ fun VendorDetailsContent(
                                 Text(
                                     text = "Cancel",
                                     style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Medium
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = customFontFamily
+
                                     )
                                 )
                             }
@@ -1621,7 +1684,9 @@ fun VendorDetailsContent(
                                         Text(
                                             text = "Proceed & Pay",
                                             style = MaterialTheme.typography.bodyLarge.copy(
-                                                fontWeight = FontWeight.Medium
+                                                fontWeight = FontWeight.Light,
+                                                fontFamily = customFontFamily
+
                                             )
                                         )
                                     }
@@ -1668,14 +1733,17 @@ private fun BookingDetailRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = customFontFamily
                 )
             )
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = customFontFamily
+
                 )
             )
         }
@@ -1768,7 +1836,9 @@ fun FeatureIcon(
             color = Color.Gray,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            fontFamily = customFontFamily
+
         )
     }
 }
@@ -1798,7 +1868,9 @@ fun PricingCard(
                         MaterialTheme.typography.bodyLarge
                     else
                         MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = customFontFamily
+
                 )
 
                 Row(
@@ -1811,7 +1883,9 @@ fun PricingCard(
                         else
                             MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1976D2)
+                        color = Color(0xFF1976D2),
+                        fontFamily = customFontFamily
+
                     )
                     Text(
                         text = " per bag",
@@ -1820,7 +1894,9 @@ fun PricingCard(
                         else
                             MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                        fontFamily = customFontFamily
+
                     )
                 }
 
@@ -1832,7 +1908,9 @@ fun PricingCard(
                         else
                             MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(top = 4.dp),
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -1849,8 +1927,12 @@ fun PricingCard(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(
                         horizontal = if (isTablet) 12.dp else 8.dp,
-                        vertical = if (isTablet) 6.dp else 4.dp
-                    )
+                        vertical = if (isTablet) 6.dp else 4.dp,
+
+                    ),
+                    fontFamily = customFontFamily
+
+
                 )
             }
         }
@@ -1893,7 +1975,9 @@ fun ModernInfoCard(
                         MaterialTheme.typography.headlineSmall
                     else
                         MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = customFontFamily
+
                 )
             }
 
@@ -1953,13 +2037,17 @@ fun StorageDetailsModern(
                         MaterialTheme.typography.bodyMedium
                     else
                         MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = customFontFamily
+
                 )
                 Text(
                     text = if (storageDetails.is24x7) "24/7 Available"
                     else "${storageDetails.openingTime} - ${storageDetails.closingTime}",
                     style = textStyle,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = customFontFamily
+
                 )
             }
         }
@@ -1973,7 +2061,9 @@ fun StorageDetailsModern(
                 else
                     MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
+                fontFamily = customFontFamily
+
             )
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1992,7 +2082,9 @@ fun StorageDetailsModern(
                             modifier = Modifier.padding(
                                 horizontal = if (isTablet) 16.dp else 12.dp,
                                 vertical = if (isTablet) 8.dp else 6.dp
-                            )
+                            ),
+                            fontFamily = customFontFamily
+
                         )
                     }
                 }
@@ -2018,11 +2110,15 @@ fun StorageDetailsModern(
                             MaterialTheme.typography.bodyMedium
                         else
                             MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = Color.Gray,
+                        fontFamily = customFontFamily
+
                     )
                     Text(
                         text = storageDetails.securityNotes,
-                        style = textStyle
+                        style = textStyle,
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -2061,17 +2157,23 @@ fun LocationDetailsModern(
                         MaterialTheme.typography.bodyMedium
                     else
                         MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = customFontFamily
+
                 )
                 Text(
                     text = "${locationDetails.streetAddress}, ${locationDetails.city}",
                     style = textStyle,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = customFontFamily
+
                 )
                 Text(
                     text = "${locationDetails.state}, ${locationDetails.country} - ${locationDetails.postalCode}",
                     style = textStyle,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = customFontFamily
+
                 )
             }
         }
@@ -2093,11 +2195,15 @@ fun LocationDetailsModern(
                             MaterialTheme.typography.bodyMedium
                         else
                             MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = Color.Gray,
+                        fontFamily = customFontFamily
+
                     )
                     Text(
                         text = locationDetails.landmark,
-                        style = textStyle
+                        style = textStyle,
+                        fontFamily = customFontFamily
+
                     )
                 }
             }
@@ -2150,7 +2256,9 @@ fun LocationDetailsModern(
             Text(
                 text = "1.2 km from city center",
                 style = textStyle,
-                color = Color.Gray
+                color = Color.Gray,
+                fontFamily = customFontFamily
+
             )
         }
     }
@@ -2185,12 +2293,16 @@ fun ContactDetailsModern(
                         MaterialTheme.typography.bodyMedium
                     else
                         MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = customFontFamily
+
                 )
                 Text(
                     text = personalDetails.ownerName,
                     style = textStyle,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = customFontFamily
+
                 )
             }
         }
@@ -2209,7 +2321,9 @@ fun ContactDetailsModern(
                 text = personalDetails.phoneNumber,
                 style = textStyle,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF4CAF50)
+                color = Color(0xFF4CAF50),
+                fontFamily = customFontFamily
+
             )
         }
 
@@ -2226,7 +2340,9 @@ fun ContactDetailsModern(
             Text(
                 text = personalDetails.email,
                 style = textStyle,
-                color = Color(0xFFFF9800)
+                color = Color(0xFFFF9800),
+                fontFamily = customFontFamily
+
             )
         }
     }
@@ -2258,7 +2374,9 @@ fun InfoChip(
                     MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1976D2),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontFamily = customFontFamily
+
             )
             Text(
                 text = label,
@@ -2267,7 +2385,9 @@ fun InfoChip(
                 else
                     MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontFamily = customFontFamily
+
             )
         }
     }

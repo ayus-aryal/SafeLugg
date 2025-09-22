@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object VendorRetrofitInstance {
     val api: VendorApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("https://29fe1d288e54.ngrok-free.app/")
+            .baseUrl("https://658d3a603878.ngrok-free.app/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(VendorApiService::class.java)
