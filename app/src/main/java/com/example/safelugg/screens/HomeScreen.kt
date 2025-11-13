@@ -468,7 +468,7 @@ fun ModernBottomNavBar(navController: NavController) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
                 selected = selectedTab == index,
-                onClick = { selectedTab = index },
+                onClick = { selectedTab = index},
                 icon = {
                     Icon(
                         imageVector = if (selectedTab == index) item.selectedIcon else item.icon,
@@ -495,3 +495,5 @@ fun ModernBottomNavBar(navController: NavController) {
         }
     }
 }
+
+

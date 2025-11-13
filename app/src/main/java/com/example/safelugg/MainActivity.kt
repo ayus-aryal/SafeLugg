@@ -1,5 +1,6 @@
 package com.example.safelugg
 
+import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -18,21 +19,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.safelugg.model.CheckoutVerifyRequest
+import com.example.safelugg.myviewmodels.BookingViewModel
 import com.example.safelugg.myviewmodels.CustomerViewModel
 import com.example.safelugg.myviewmodels.GoogleSignInViewModel
-import com.example.safelugg.myviewmodels.PaymentApi
 import com.example.safelugg.myviewmodels.PaymentRetrofitInstance
 import com.example.safelugg.myviewmodels.ProvideBookingApi.bookingApi
 import com.example.safelugg.myviewmodels.UserRetrofitInstance
-import com.example.safelugg.screens.FillYourDetailsScreen
-import com.example.safelugg.screens.MainScreen
-import com.example.safelugg.screens.OnboardingScreen
-import com.example.safelugg.screens.SearchResultScreen
-import com.example.safelugg.screens.SplashScreen
-import com.example.safelugg.screens.VendorDetailsScreen
-import com.example.safelugg.screens.WelcomeScreen
+import com.example.safelugg.screens.*
 import com.example.safelugg.ui.theme.SafeLuggTheme
-import com.example.safelugg.utils.PaymentHandler
 import com.example.safelugg.utils.PreferenceHelper
 import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
@@ -43,40 +37,38 @@ import org.json.JSONObject
 
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
-    // This will be set just before starting checkout.
-    // When Razorpay calls back, we will use this id to call /api/payments/{id}/verify
     var lastInitiatedPaymentId: Long? = null
-
     private val paymentApi = PaymentRetrofitInstance.api
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            SafeLugg()
-        }
+        setContent { SafeLugg() }
     }
 
     // Razorpay success callback
     override fun onPaymentSuccess(razorpayPaymentId: String, paymentData: PaymentData) {
         Log.d("MainActivity", "Razorpay success: $razorpayPaymentId")
-        // Extract order_id and signature from paymentData JSON
+
         try {
-            val json: JSONObject = paymentData.getData() // PaymentData.getData() returns JSONObject
+            val json: JSONObject = paymentData.getData()
             val orderId = json.optString("order_id", "")
             val signature = json.optString("signature", "")
 
             val paymentRecordId = lastInitiatedPaymentId
             if (paymentRecordId == null) {
-                Log.w("MainActivity", "No paymentRecordId set for verification. order=$orderId")
                 runOnUiThread {
-                    Toast.makeText(this, "Payment succeeded but local payment id unknown", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Payment succeeded but payment record not found.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 return
             }
 
-            // Call backend verify API
+            // Verify payment with backend
             lifecycleScope.launch {
                 try {
                     val req = CheckoutVerifyRequest(
@@ -85,17 +77,36 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
                         razorpaySignature = signature
                     )
                     val resp = paymentApi.verifyPayment(paymentRecordId, req)
+
                     withContext(Dispatchers.Main) {
                         if (resp.isSuccessful) {
-                            Toast.makeText(this@MainActivity, "Payment verified successfully", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Payment verified successfully!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            // Navigate to booking verification screen after success
+                            (this@MainActivity as? Activity)?.let { activity ->
+                                val navController = (activity as MainActivity).navControllerInstance
+                                navController?.navigate("booking_verification_screen/$paymentRecordId")
+                            }
                         } else {
-                            Toast.makeText(this@MainActivity, "Payment verified failed: ${resp.code()}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Payment verification failed: ${resp.code()}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "Verify request failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Verify request failed: ${e.localizedMessage}",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
@@ -113,8 +124,10 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         runOnUiThread {
             Toast.makeText(this, "Payment failed: $response", Toast.LENGTH_LONG).show()
         }
-        // Optionally call backend mark failed using lastInitiatedPaymentId
     }
+
+    // For navigation access in payment callback
+    var navControllerInstance: androidx.navigation.NavHostController? = null
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -123,39 +136,39 @@ fun SafeLugg() {
     val context = LocalContext.current
     val navController = rememberNavController()
     val googleSignInViewModel = GoogleSignInViewModel()
-    val customerViewModel: CustomerViewModel = viewModel()  // Shared instance
-    val userApiService = UserRetrofitInstance.api             // <-- your Retrofit instance
-// <-- you need to store email in SharedPreferences at login
+    val customerViewModel: CustomerViewModel = viewModel()
+    val userApiService = UserRetrofitInstance.api
+    val bookingViewModel: BookingViewModel = viewModel()
 
 
+    // Expose navController to MainActivity for navigation in callbacks
+    (context as? MainActivity)?.navControllerInstance = navController
 
     SafeLuggTheme {
         NavHost(navController = navController, startDestination = "splash_screen") {
 
-            composable(route = "splash_screen") {
-                SplashScreen(
-                    navController = navController,
-                )
+            composable("splash_screen") {
+                SplashScreen(navController = navController)
             }
 
-
-            composable(route = "onboarding_screen") {
+            composable("onboarding_screen") {
                 OnboardingScreen(navController)
             }
 
-            composable(route = "welcome_screen") {
+            composable("welcome_screen") {
                 WelcomeScreen {
                     googleSignInViewModel.handleGoogleSignIn(navController.context, navController)
                 }
             }
 
-            composable(route = "fill_your_details") {
+            composable("fill_your_details") {
                 FillYourDetailsScreen(navController)
             }
 
-            composable(route = "home_screen") {
+            composable("home_screen") {
                 MainScreen(navController, customerViewModel)
             }
+
             composable(
                 route = "search_result_screen/{location}/{date}/{bags}",
                 arguments = listOf(
@@ -172,13 +185,8 @@ fun SafeLugg() {
                     location = location,
                     date = date,
                     bags = bags,
-                    onEditClick = {
-                        // Navigate to your search/edit screen or popBackStack() if you want to reuse
-                        navController.popBackStack()
-                    },
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
+                    onEditClick = { navController.popBackStack() },
+                    onBackClick = { navController.popBackStack() },
                     viewModel = customerViewModel,
                     navController
                 )
@@ -188,8 +196,7 @@ fun SafeLugg() {
                 route = "vendor_details/{vendorId}/{bags}",
                 arguments = listOf(
                     navArgument("vendorId") { type = NavType.LongType },
-                    navArgument("bags") { type = NavType.StringType } // since you are using String in search
-
+                    navArgument("bags") { type = NavType.StringType }
                 )
             ) { backStackEntry ->
                 val vendorId = backStackEntry.arguments?.getLong("vendorId") ?: 0
@@ -200,14 +207,26 @@ fun SafeLugg() {
                     bags = bags,
                     viewModel = viewModel(),
                     bookingApi = bookingApi,
-                    onBookingCreated = { booking -> /* handle booking */ }
-                )            }
+                    onBookingCreated = { /* optional */ }
+                )
+            }
 
-
-
-
-
-
+            // New Booking Verification Screen route
+            composable(
+                route = "booking_verification_screen/{bookingId}",
+                arguments = listOf(navArgument("bookingId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val bookingId = backStackEntry.arguments?.getLong("bookingId") ?: 0L
+                BookingConfirmationScreen(
+                    viewModel = bookingViewModel,
+                    bookingId = bookingId,
+                    onClose = { navController.popBackStack() },
+                    onDownloadReceipt = { /* implement */ },
+                    onDownloadBookingDetails = { /* implement */ },
+                    onBackToHome = { navController.navigate("home_screen") },
+                    onMyBookings = { /* implement */ }
+                )
+            }
         }
     }
 }

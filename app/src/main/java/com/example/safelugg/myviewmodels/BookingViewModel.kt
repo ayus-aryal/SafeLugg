@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safelugg.model.BookingCreateRequest
 import com.example.safelugg.model.BookingResponse
+import com.example.safelugg.model.BookingVerificationDTO
 import com.example.safelugg.myviewmodels.ProvideBookingApi.bookingApi
 import kotlinx.coroutines.launch
 
 class BookingViewModel: ViewModel() {
 
+    // --- Existing booking creation states ---
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
@@ -42,5 +44,22 @@ class BookingViewModel: ViewModel() {
         }
     }
 
+    // --- New Booking Verification State ---
+    private val _bookingVerification = mutableStateOf<BookingVerificationDTO?>(null)
+    val bookingVerification: State<BookingVerificationDTO?> = _bookingVerification
 
+    fun fetchBookingVerification(bookingId: Long) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val details = bookingApi.getBookingVerification(bookingId)
+                _bookingVerification.value = details
+            } catch (e: Exception) {
+                val error = e.localizedMessage ?: "Failed to fetch booking verification"
+                _errorMessage.value = error
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 }

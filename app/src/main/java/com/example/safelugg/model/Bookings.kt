@@ -1,5 +1,7 @@
 package com.example.safelugg.model
 
+import java.time.OffsetDateTime
+
 
 data class BookingCreateRequest(
     val vendorId: Long,
@@ -26,4 +28,19 @@ data class BookingResponse(
 
     val razorpayOrderId: String?,
     val razorpayKeyId: String?
+)
+
+data class BookingVerificationDTO(
+    val bookingId: String,
+    val businessName: String,
+    val address: String,
+    val phoneNumber: String,
+    val checkIn: OffsetDateTime?,
+    val checkOut: OffsetDateTime?,
+    val durationHours: Int?,
+    val noOfBags: Int,
+    val paidAmount: Int,
+    val paymentMode: String,
+    val paymentId: String,
+    val paymentStatus: String
 )

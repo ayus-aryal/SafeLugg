@@ -527,7 +527,7 @@ fun VendorDetailsContent(
                 ) {
                     LocationDetailsModern(
                         locationDetails = details.locationDetails,
-                        apiKey = com.example.safelugg.BuildConfig.MAPS_API_KEY,
+                        apiKey = BuildConfig.MAPS_API_KEY,
                         isTablet = isTablet
                     )
                 }
@@ -1623,6 +1623,10 @@ fun VendorDetailsContent(
                                             // Start Razorpay checkout
                                             val amountPaise = (paymentInit.amount * 100).toInt()
                                             val keyId = "rzp_test_RGASttiAoqXee1"
+                                            //val keyId = BuildConfig.RAZORPAY_KEY_ID
+                                            // apiKey = com.example.safelugg.BuildConfig.MAPS_API_KEY,
+
+
                                             val orderId = paymentInit.razorpayOrderId
 
                                             withContext(Dispatchers.Main) {

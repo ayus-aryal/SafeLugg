@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object UserRetrofitInstance {
     val api: UserApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("https://658d3a603878.ngrok-free.app/") // Replace with actual IP and port
+            .baseUrl("https://a8343dd19d8a.ngrok-free.app/") // Replace with actual IP and port
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(UserApiService::class.java)
