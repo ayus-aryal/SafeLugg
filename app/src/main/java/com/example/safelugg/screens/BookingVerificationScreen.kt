@@ -1,6 +1,8 @@
 package com.example.safelugg.screens
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -85,6 +87,7 @@ private val LightGray = Color(0xFFF3F4F6)
 private val CardBackground = Color(0xFFFFFFFF)
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun formatOffsetDateTime(odt: OffsetDateTime?): String {
     return if (odt == null) {
         "N/A"
@@ -98,6 +101,7 @@ fun formatOffsetDateTime(odt: OffsetDateTime?): String {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun BookingConfirmationScreen(
